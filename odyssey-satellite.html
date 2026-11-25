@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Season odyssey on satellite | Premier League Atlas</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+:root{--g:#00ff85;--p:#38003c;--m:#e90052}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#1b0020;color:#fff;font:15px/1.5 system-ui,-apple-system,"Segoe UI","Noto Sans Arabic",Tahoma,sans-serif}
+#map{position:absolute;inset:0}
+.bar{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:linear-gradient(#240028ee,#24002800)}
+.bar h1{font:700 18px/1.1 "Iowan Old Style",Georgia,serif;margin:0 auto 0 0}
+select,button{font:inherit;color:#fff;background:#38003ccc;border:1px solid #963cff;border-radius:999px;padding:7px 14px;cursor:pointer;backdrop-filter:blur(6px)}
+button:hover{border-color:#fff}button.on{background:var(--g);color:#38003c;border-color:var(--g);font-weight:700}
+button:focus-visible,select:focus-visible{outline:2px solid var(--g);outline-offset:2px}
+.hud{position:absolute;left:12px;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:5;width:min(460px,calc(100% - 24px));background:rgba(28,0,32,.88);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:14px 16px}
+.hud .t{font:700 22px/1.2 "Iowan Old Style",Georgia,serif}.hud .s{color:rgba(255,255,255,.78);margin:2px 0 10px}
+.hud .row{display:flex;gap:18px;flex-wrap:wrap}.hud .row div{font-size:13px;color:rgba(255,255,255,.7)}.hud .row b{display:block;font-size:20px;color:#fff}
+.dots{display:flex;gap:4px;margin-top:12px;flex-wrap:wrap}.dots i{height:5px;width:18px;border-radius:4px;background:rgba(255,255,255,.22);cursor:pointer}.dots i.d{background:rgba(0,255,133,.6)}.dots i.c{background:var(--g)}
+.pin{background:#fff;color:#38003c;font:700 12px/1 system-ui,sans-serif;padding:5px 9px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.pin.h{background:var(--g)}
+.ball{width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(0,255,133,.45),0 0 18px 6px rgba(0,255,133,.8)}
+#msg{position:absolute;inset:80px 12px auto 12px;z-index:6;background:#e90052e6;border-radius:14px;padding:12px 14px;display:none}
+.maplibregl-ctrl-attrib{font-size:11px}
+[dir=rtl] .bar h1{margin:0 0 0 auto}
+</style></head><body>
+<div id="map"></div>
+<div class="bar"><h1 id="ttl">Season odyssey on satellite</h1>
+<select id="club" aria-label="Club"></select>
+<button id="bPlay" class="on">Play</button><button id="bPrev" aria-label="Previous trip">&lt;</button><button id="bNext" aria-label="Next trip">&gt;</button><button id="bSpeed">1x</button><button id="bLang">العربية</button></div>
+<div id="msg"></div>
+<div class="hud" id="hud"></div>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+/* ---- Imagery provider. Google satellite tiles cannot be used outside the Google Maps API, so use one of these. ---- */
+const CFG={provider:'esri',key:''};            // 'esri' (no key, check Esri terms), 'maptiler' or 'mapbox' (key required)
+const QS=new URLSearchParams(location.search);if(QS.get('provider'))CFG.provider=QS.get('provider');if(QS.get('key'))CFG.key=QS.get('key');
+let SPEED=+QS.get('speed')||1;
+const TILES={
+ esri:{tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery &copy; Esri, Maxar, Earthstar Geographics'},
+ maptiler:{tiles:['https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key='+CFG.key],tileSize:512,maxzoom:20,attribution:'&copy; MapTiler &copy; OpenStreetMap contributors'},
+ mapbox:{tiles:['https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.jpg90?access_token='+CFG.key],tileSize:512,maxzoom:20,attribution:'&copy; Mapbox &copy; OpenStreetMap contributors'}};
+let LANG='en';try{LANG=localStorage.getItem('lang')||(/^ar/i.test(navigator.language||'')?'ar':'en')}catch(e){}
+const tt=(e,a)=>LANG==='ar'?a:e,$=id=>document.getElementById(id);
+const NAMAR={ARS:'آرسنال',AVL:'أستون فيلا',BOU:'بورنموث',BRE:'برينتفورد',BHA:'برايتون',CHE:'تشيلسي',COV:'كوفنتري سيتي',CRY:'كريستال بالاس',EVE:'إيفرتون',FUL:'فولهام',HUL:'هال سيتي',IPS:'إبسويتش تاون',LEE:'ليدز يونايتد',LIV:'ليفربول',MCI:'مانشستر سيتي',MUN:'مانشستر يونايتد',NEW:'نيوكاسل يونايتد',NFO:'نوتنغهام فورست',SUN:'سندرلاند',TOT:'توتنهام هوتسبير'};
+const nm=i=>LANG==='ar'&&NAMAR[K[i][0]]?NAMAR[K[i][0]]:K[i][1];
+const rad=Math.PI/180,DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],DNA=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],MNA=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const lastSun=(y,m)=>{const d=new Date(Date.UTC(y,m+1,0));return d.getUTCDate()-d.getUTCDay()};
+const ukOff=(y,mo,da)=>{const t=Date.UTC(y,mo,da,12);return t>=Date.UTC(y,2,lastSun(y,2),1)&&t<Date.UTC(y,9,lastSun(y,9),1)?1:0};
+const fd=md=>{const mo=+md.slice(0,2)-1;return[mo>=6?2026:2027,mo,+md.slice(2)]},fmin=t=>+t.slice(0,2)*60+ +t.slice(2);
+const koMs=f=>{const d=fd(f[3]);return Date.UTC(d[0],d[1],d[2])+(fmin(f[4])-60*ukOff(d[0],d[1],d[2]))*6e4};
+function sunEl(lat,lon,ms){const d=ms/864e5+2440587.5-2451545,g=(357.529+.98560028*d)*rad,L=(280.459+.98564736*d+1.915*Math.sin(g)+.02*Math.sin(2*g))*rad,e=(23.439-4e-7*d)*rad,ra=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L)),dec=Math.asin(Math.sin(e)*Math.sin(L)),H=((18.697374558+24.06570982441908*d)*15+lon)*rad-ra;return Math.asin(Math.sin(lat*rad)*Math.sin(dec)+Math.cos(lat*rad)*Math.cos(dec)*Math.cos(H))/rad}
+const hav=(a,b)=>{const q=Math.sin((b[1]-a[1])*rad/2)**2+Math.cos(a[1]*rad)*Math.cos(b[1]*rad)*Math.sin((b[0]-a[0])*rad/2)**2;return 12742*Math.asin(Math.sqrt(q))};
+const brg=(a,b)=>{const p1=a[1]*rad,p2=b[1]*rad,dl=(b[0]-a[0])*rad;return(Math.atan2(Math.sin(dl)*Math.cos(p2),Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl))/rad+360)%360};
+const fmtD=f=>{const d=fd(f[3]),w=new Date(Date.UTC(d[0],d[1],d[2])).getUTCDay();return(LANG==='ar'?DNA:DN)[w]+' '+d[2]+' '+(LANG==='ar'?MNA:MN)[d[1]]};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let K=[],FXA=[],idx={},P=[],map,T=[],cur=0,tok=0,playing=false,doneF=[],pinF,pinT,ballM;
+const EMPTY={type:'FeatureCollection',features:[]},line=c=>({type:'Feature',geometry:{type:'LineString',coordinates:c},properties:{}});
+function msg(t){const m=$('msg');m.textContent=t;m.style.display=t?'block':'none'}
+function arc(a,b,n=72){const dx=b[0]-a[0],dy=b[1]-a[1],cx=(a[0]+b[0])/2-dy*.22,cy=(a[1]+b[1])/2+dx*.13,o=[];for(let i=0;i<=n;i++){const t=i/n,u=1-t;o.push([u*u*a[0]+2*u*t*cx+t*t*b[0],u*u*a[1]+2*u*t*cy+t*t*b[1]])}return o}
+function trips(c){const code=K[c][0];return FXA.filter(f=>f[0]===code&&f[3]).map(f=>({f,to:idx[f[1]],ms:koMs(f),km:hav(P[c],P[idx[f[1]]])})).sort((a,b)=>a.ms-b.ms)}
+function fly(o){return new Promise(res=>{let done=false;const fin=()=>{if(!done){done=true;res()}};map.once('moveend',fin);setTimeout(fin,(o.duration||50)/SPEED+800);map.flyTo(Object.assign({},o,{duration:Math.max(50,(o.duration||50)/SPEED),essential:true}))})}
+const alive=m=>tok===m;
+function hud(i,arrived){const t=T[i];if(!t){$('hud').innerHTML='';return}const home=K[+$('club').value],el=sunEl(K[t.to][2],K[t.to][3],t.ms),tot=T.slice(0,arrived?i+1:i).reduce((a,x)=>a+x.km,0);
+$('hud').innerHTML='<div class="t">'+tt('Gameweek ','الجولة ')+t.f[2]+', '+tt('at ','في ')+nm(t.to)+'</div><div class="s">'+fmtD(t.f)+', '+t.f[4].slice(0,2)+':'+t.f[4].slice(2)+'</div><div class="row"><div><b>'+Math.round(t.km)+' '+tt('km','كم')+'</b>'+tt('this trip','هذه الرحلة')+'</div><div><b>'+Math.round(tot).toLocaleString('en-US')+' '+tt('km','كم')+'</b>'+tt('season so far','حتى الآن')+'</div><div><b>'+(el<-.83?tt('Floodlights','كشافات'):tt('Sun ','شمس ')+Math.round(el)+'\u00b0')+'</b>'+tt('at kick-off','عند الانطلاق')+'</div></div><div class="dots">'+T.map((_,k)=>'<i data-k="'+k+'" class="'+(k<i||(k===i&&arrived)?'d':'')+(k===i?' c':'')+'"></i>').join('')+'</div>';
+[...$('hud').querySelectorAll('.dots i')].forEach(e=>e.onclick=()=>go(+e.dataset.k))}
+function pin(el,txt,home){el.className='pin'+(home?' h':'');el.textContent=txt}
+async function leg(i,m){const t=T[i],c=+$('club').value,a=P[c],b=P[t.to],pts=arc(a,b),d=t.km,bear=brg(a,b);
+cur=i;hud(i,false);pin(pinF.getElement(),nm(c),true);pinF.setLngLat(a);pin(pinT.getElement(),nm(t.to),false);pinT.setLngLat(b);
+const zFar=Math.max(4.6,Math.min(8.2,9.4-Math.log2(Math.max(d,20)/20)));
+if(i===0||!playing){map.jumpTo({center:a,zoom:16.4,pitch:62,bearing:bear-25})}else{await fly({center:a,zoom:15.8,pitch:58,bearing:bear-25,duration:2200});if(!alive(m))return false}
+await sleep(900/SPEED);if(!alive(m))return false;
+await fly({center:[(a[0]+b[0])/2,(a[1]+b[1])/2],zoom:zFar,pitch:38,bearing:bear*.35,duration:2600});if(!alive(m))return false;
+const live=map.getSource('live'),ball=ballM;
+await new Promise(res=>{const t0=performance.now(),ms=2000/SPEED;(function st(now){if(!alive(m))return res();const p=Math.min(1,(now-t0)/ms),e=1-Math.pow(1-p,3),n=Math.max(2,Math.round(e*(pts.length-1))+1);live.setData(line(pts.slice(0,n)));ball.setLngLat(pts[n-1]);if(p<1)requestAnimationFrame(st);else res()})(t0)});if(!alive(m))return false;
+await fly({center:b,zoom:16.3,pitch:63,bearing:bear,duration:3000});if(!alive(m))return false;
+doneF.push(line(pts));map.getSource('done').setData({type:'FeatureCollection',features:doneF});map.getSource('live').setData(EMPTY);hud(i,true);
+await sleep(1900/SPEED);return alive(m)}
+async function play(from){const m=++tok;playing=true;$('bPlay').textContent=tt('Pause','إيقاف');$('bPlay').classList.add('on');
+doneF=[];map.getSource('done').setData(EMPTY);for(let k=0;k<from;k++)doneF.push(line(arc(P[+$('club').value],P[T[k].to])));map.getSource('done').setData({type:'FeatureCollection',features:doneF});
+for(let i=from;i<T.length;i++){if(!(await leg(i,m)))return;
+if(i<T.length-1){await fly({center:P[+$('club').value],zoom:11,pitch:30,bearing:0,duration:2000});if(!alive(m))return}}
+playing=false;$('bPlay').textContent=tt('Replay','إعادة');tok++}
+function stop(){tok++;playing=false;if(map&&map.stop)map.stop();$('bPlay').textContent=tt('Play','تشغيل')}
+function go(i){i=Math.max(0,Math.min(T.length-1,i));stop();play(i)}
+function setClub(c){stop();T=trips(c);cur=0;doneF=[];map.getSource('done').setData(EMPTY);map.getSource('live').setData(EMPTY);map.jumpTo({center:P[c],zoom:15.5,pitch:60,bearing:20});
+pin(pinF.getElement(),nm(c),true);pinF.setLngLat(P[c]);pinT.setLngLat(P[c]);pinT.getElement().textContent='';ballM.setLngLat(P[c]);
+if(!T.length)msg(tt('No dated away fixtures for this club in atlas.json.','لا توجد مباريات خارج الأرض بتواريخ لهذا النادي في atlas.json.'));else{msg('');hud(0,false)}$('bPlay').textContent=tt('Play','تشغيل')}
+function fillClubs(){const v=$('club').value;$('club').innerHTML=K.map((k,i)=>[nm(i),i]).sort((a,b)=>a[0].localeCompare(b[0],LANG)).map(p=>'<option value="'+p[1]+'">'+p[0]+'</option>').join('');if(v)$('club').value=v}
+function lang(){document.documentElement.lang=LANG;document.documentElement.dir=LANG==='ar'?'rtl':'ltr';$('ttl').textContent=tt('Season odyssey on satellite','أوديسا الموسم على الأقمار الصناعية');$('bLang').textContent=LANG==='ar'?'English':'العربية';$('bPlay').textContent=tt(playing?'Pause':'Play',playing?'إيقاف':'تشغيل');if(K.length){fillClubs();if(T.length)hud(cur,false)}}
+function boot(d){K=d.clubs;FXA=d.fixtures;K.forEach((k,i)=>{idx[k[0]]=i});P=K.map(k=>[k[3],k[2]]);
+const src=TILES[CFG.provider]||TILES.esri;
+map=new maplibregl.Map({container:'map',style:{version:8,sources:{sat:Object.assign({type:'raster'},src)},layers:[{id:'sat',type:'raster',source:'sat'}]},center:[-1.5,53],zoom:5.2,pitch:0,maxPitch:75,attributionControl:{compact:true}});
+map.on('load',()=>{
+ map.addSource('done',{type:'geojson',data:EMPTY});map.addSource('live',{type:'geojson',data:EMPTY});map.addSource('stad',{type:'geojson',data:{type:'FeatureCollection',features:K.map((k,i)=>({type:'Feature',geometry:{type:'Point',coordinates:P[i]},properties:{}}))}});
+ map.addLayer({id:'done-line',type:'line',source:'done',paint:{'line-color':'#00ff85','line-opacity':.5,'line-width':2.2}});
+ map.addLayer({id:'live-glow',type:'line',source:'live',paint:{'line-color':'#00ff85','line-opacity':.4,'line-width':11,'line-blur':7}});
+ map.addLayer({id:'live-line',type:'line',source:'live',paint:{'line-color':'#ffffff','line-width':3.5}});
+ map.addLayer({id:'stad-dot',type:'circle',source:'stad',paint:{'circle-radius':4,'circle-color':'#ffffff','circle-stroke-color':'#38003c','circle-stroke-width':1.5}});
+ pinF=new maplibregl.Marker({element:document.createElement('div'),anchor:'bottom',offset:[0,-10]}).setLngLat([0,0]).addTo(map);
+ pinT=new maplibregl.Marker({element:document.createElement('div'),anchor:'bottom',offset:[0,-10]}).setLngLat([0,0]).addTo(map);
+ const be=document.createElement('div');be.className='ball';ballM=new maplibregl.Marker({element:be}).setLngLat([0,0]).addTo(map);
+ fillClubs();const q=QS.get('club');$('club').value=q&&idx[q]!=null?idx[q]:(idx.NEW!=null?idx.NEW:0);setClub(+$('club').value);lang();
+ if(QS.get('autoplay')!=='0')setTimeout(()=>play(0),700)});
+map.on('error',e=>console.warn('map',e&&e.error&&e.error.message))}
+$('club').onchange=()=>setClub(+$('club').value);
+$('bPlay').onclick=()=>{if(playing)stop();else play(cur>=T.length-1&&!playing&&$('bPlay').textContent!==tt('Play','تشغيل')?0:cur)};
+$('bPrev').onclick=()=>go(cur-1);$('bNext').onclick=()=>go(cur+1);
+$('bSpeed').onclick=()=>{SPEED=SPEED>=4?1:SPEED*2;$('bSpeed').textContent=SPEED+'x'};
+$('bLang').onclick=()=>{LANG=LANG==='ar'?'en':'ar';try{localStorage.setItem('lang',LANG)}catch(e){}lang()};
+addEventListener('keydown',e=>{if(e.code==='Space'&&e.target.tagName!=='SELECT'){e.preventDefault();$('bPlay').click()}});
+lang();
+fetch('atlas.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(boot).catch(()=>msg(tt('atlas.json was not found next to this page. Run build_atlas.py and put the file beside it.','لم يتم العثور على atlas.json بجوار هذه الصفحة. شغّل build_atlas.py وضع الملف بجانبها.')));
+</script></body></html>

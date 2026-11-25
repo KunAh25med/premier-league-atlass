@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Premier League Atlas</title>
+<style>
+:root{--bg:#f5f1f8;--ink:#2a0030;--mut:#6e5c76;--card:#fff;--line:#e5dbec;--acc:#e90052;--g:#00ff85;--p:#38003c;--shadow:0 22px 44px -26px rgba(56,0,60,.5);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b0020;--ink:#f6eefa;--mut:#c0a8c9;--card:#2a0030;--line:#4a1650;--acc:#00ff85;--shadow:0 22px 44px -26px rgba(0,0,0,.8);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b0020;--ink:#f6eefa;--mut:#c0a8c9;--card:#2a0030;--line:#4a1650;--acc:#00ff85;--shadow:0 22px 44px -26px rgba(0,0,0,.8);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI","Noto Sans Arabic",Tahoma,sans-serif}
+.hero{position:relative;overflow:hidden;color:#fff;background:radial-gradient(800px 420px at 88% -12%,rgba(0,255,133,.24),transparent 62%),radial-gradient(640px 380px at -4% 112%,rgba(233,0,82,.38),transparent 60%),linear-gradient(135deg,#240028,#38003c 55%,#4f0a59);padding:34px 16px 120px}
+.hsvg{position:absolute;inset-inline-end:2%;top:-8%;height:128%;opacity:.5;pointer-events:none}
+.hin{max-width:1180px;margin:0 auto;position:relative}
+.htop{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:54px}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--g);text-transform:uppercase}
+.hero h1{font:700 clamp(44px,8vw,96px)/.96 "Iowan Old Style",Georgia,"Noto Naskh Arabic",serif;letter-spacing:-.025em;margin:0 0 18px;max-width:11ch}
+.hero h1 em{font-style:normal;color:var(--g)}
+.lede{font-size:clamp(19px,2.6vw,28px);font-weight:500;margin:0 0 6px;max-width:30ch}
+.lede2{color:rgba(255,255,255,.72);margin:0 0 26px;max-width:46ch}
+.hcta{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:34px}
+.hstats{display:flex;flex-wrap:wrap;gap:30px}.hstats b{display:block;font:700 34px/1 "Iowan Old Style",Georgia,serif}.hstats span{font-size:13px;color:rgba(255,255,255,.7)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.main{margin-top:-84px;position:relative;z-index:2}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.map{background:#1f0023;border-radius:26px;padding:0;position:relative;overflow:hidden;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.1)}
+canvas{display:block;width:100%;height:auto;cursor:crosshair}
+.tip{position:absolute;pointer-events:none;background:#38003cee;color:#f6eefa;border:1px solid #963cff;border-radius:8px;padding:4px 9px;font-size:13px;opacity:0;transition:opacity .15s;white-space:nowrap}
+.zoom{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:38px;height:38px;padding:0;border-radius:12px;background:#38003ccc;color:#fff;border:1px solid #963cff;font-size:18px;line-height:1;backdrop-filter:blur(6px)}
+.hint{position:absolute;right:16px;bottom:14px;color:#c9a2ff;font-size:12px;pointer-events:none}
+.cap{position:absolute;left:14px;right:14px;bottom:14px;background:rgba(28,0,32,.86);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:14px 16px;color:#fff;display:none}
+.cap.on{display:block}.ch{font:600 20px/1.2 "Iowan Old Style",Georgia,serif;margin-bottom:4px}.cp{font-size:15px;color:rgba(255,255,255,.88)}
+.cf{display:flex;align-items:center;gap:8px;margin-top:12px}.dots{display:flex;gap:6px;flex:1}.dots i{width:22px;height:4px;border-radius:4px;background:rgba(255,255,255,.25)}.dots i.on{background:var(--g)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:18px;box-shadow:var(--shadow)}
+@media (min-width:901px){.panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;transition:background .15s,transform .1s}
+button:hover{border-color:var(--ink)}button:active{transform:scale(.97)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cta{background:var(--g);color:#38003c;border-color:var(--g);font-weight:700;padding:11px 20px}.cta:hover{filter:brightness(1.06);border-color:var(--g)}
+.ghost{color:inherit;border-color:rgba(127,127,127,.45)}.hero .ghost{color:#fff;border-color:rgba(255,255,255,.4)}
+.sm{padding:5px 12px;font-size:13px}
+button:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+select{font:inherit;width:100%;padding:9px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin-bottom:10px}
+.hl{border-inline-start:4px solid var(--acc);padding-inline-start:12px;margin:0 0 14px}.hl h4{margin:0 0 6px;font:600 15px system-ui,sans-serif}.hl p{margin:0 0 6px;font-size:14px}
+.mycard{border:2px solid var(--line);border-radius:16px;padding:12px;margin:0 0 14px;background:var(--bg)}.myh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font:600 20px "Iowan Old Style",Georgia,serif}
+#my:empty{display:none}#my>.cta{margin:0 0 14px;width:100%}
+#info{border-inline-start:4px solid var(--line);padding-inline-start:12px;margin-bottom:14px}
+#info h2{font:600 22px/1.2 "Iowan Old Style",Georgia,serif;margin:0 0 6px}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;border-bottom:1px solid var(--line)}
+.kv span{color:var(--mut)}.kv b{text-align:end;font-weight:600}
+.km{font:600 36px/1 "Iowan Old Style",Georgia,serif}
+.kml{color:var(--mut);font-size:13px;margin-bottom:8px}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:13px;margin:7px 0;padding:4px 6px;border-radius:10px;cursor:pointer;transition:background .2s}.row.on{background:rgba(233,0,82,.12);outline:2px solid var(--acc)}
+.bar{grid-column:1/-1;height:4px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--acc)}
+details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;color:var(--mut)}
+pre{white-space:pre-wrap;font-size:12px;background:var(--bg);border-radius:8px;padding:10px;overflow-x:auto;margin:8px 0 0;direction:ltr;text-align:left}
+.note{color:var(--mut);font-size:12px;margin:8px 0 0}
+.moment{margin-top:54px}.moment h2,.method h2{font:700 clamp(28px,4.4vw,44px)/1.1 "Iowan Old Style",Georgia,"Noto Naskh Arabic",serif;margin:0 0 8px;letter-spacing:-.01em}
+.sub{color:var(--mut);margin:0 0 16px;max-width:64ch}
+.h3{font:600 22px/1.2 "Iowan Old Style",Georgia,serif;margin:30px 0 4px}
+.mwrap{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}@media (max-width:820px){.mwrap{grid-template-columns:1fr}}
+.mwrap canvas{cursor:default;border-radius:20px;background:#0a1022;box-shadow:var(--shadow)}
+#oc,#dk,#ppc,#ctc{max-width:560px}.tsep{width:1px;background:var(--line);margin:6px 4px;flex:none}a.cta{border:1px solid var(--g);border-radius:999px;text-decoration:none;display:inline-block;text-align:center}
+.mside{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+.mside label{font-size:13px;color:var(--mut)}
+#tabs{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px;display:inline-flex;max-width:100%;overflow-x:auto;margin:6px 0 18px}
+#tabs button{border:0;white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--acc)}
+input[type=date]{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+input[type=file]{font:inherit;font-size:13px;max-width:100%;margin:6px 0}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;cursor:pointer;box-shadow:var(--shadow)}.dcard:hover{border-color:var(--acc)}
+.dcard .dk{font:700 30px/1 "Iowan Old Style",Georgia,serif;margin-bottom:4px}.dcard small{display:block;color:var(--mut)}
+.method{margin-top:64px}.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:16px 0}
+.mgrid>div{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}.mgrid h4{margin:0 0 6px;font:600 17px "Iowan Old Style",Georgia,serif}.mgrid p{margin:0;font-size:14px;color:var(--mut)}
+footer{margin-top:40px;padding:26px 16px 40px;text-align:center;color:var(--mut);font-size:13px}
+.modal{position:fixed;inset:0;background:rgba(20,0,24,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50}.modal.on{display:flex}
+.mbox{background:var(--card);border-radius:26px;padding:24px;max-width:600px;width:calc(100% - 28px);max-height:88vh;overflow:auto;box-shadow:var(--shadow)}
+.mbox h3{font:700 28px/1.1 "Iowan Old Style",Georgia,serif;margin:0 0 6px}.mbox p{margin:0 0 16px;color:var(--mut)}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:14px}.cg button{display:flex;align-items:center;gap:8px;border-radius:14px;padding:10px;text-align:start}.cg i{width:12px;height:12px;border-radius:50%;flex:none}
+</style></head><body><header class="hero"><svg class="hsvg" id="hsvg" viewBox="0 0 640 810" aria-hidden="true"></svg>
+<div class="hin"><div class="htop"><span class="eyebrow" data-ar="التحليل المكاني لكرة القدم، 2026/27">Spatial Football Analytics, 2026/27</span><button id="lang" class="ghost sm" aria-label="Language">العربية</button></div>
+<h1><span data-ar="أطلس">Premier League</span> <em data-ar="الدوري الإنجليزي">Atlas</em></h1>
+<p class="lede" data-ar="الدوري الإنجليزي كما تراه الجغرافيا.">The league seen as geography.</p>
+<p class="lede2" data-ar="اضغط على أي منطقة لتفتح النادي، اسحب لتستكشف، وكبّر بعجلة الماوس.">Tap any territory to open a club, drag to explore, scroll to zoom.</p>
+<div class="hcta"><button id="hStory" class="cta" data-ar="شغّل القصة">Play the story</button><button id="hClub" class="ghost" data-ar="اختر ناديي">Choose my club</button></div>
+<div class="hstats"><div><b id="hs1">380</b><span data-ar="مباراة">fixtures</span></div><div><b id="hs2">20</b><span data-ar="ملعبًا">stadiums</span></div><div><b id="hs3">38</b><span data-ar="جولة">gameweeks</span></div></div></div></header>
+<div class="wrap main">
+<div class="grid">
+<div class="map"><canvas id="c" width="640" height="810" aria-label="Interactive map of England with club territories, away-day travel and derby distances"></canvas>
+<div class="zoom"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zr" aria-label="League view">⌂</button></div>
+<div class="hint">Tap a territory</div><div class="cap" id="cap" role="status" aria-live="polite"></div><div class="tip" id="tip"></div></div>
+<div class="panel">
+<select id="gw" aria-label="Gameweek"></select><select id="sel" aria-label="Choose a club"></select><div class="chips" id="themes" role="group" aria-label="Palette"></div>
+<div class="chips"><button data-l="T" aria-pressed="true">Territories</button><button data-l="J" aria-pressed="true">Away days</button><button data-l="D" aria-pressed="false">Derby lines</button><button data-l="N" aria-pressed="false">Daylight</button><button id="bTour" aria-pressed="false">Tour</button><button id="bReel" aria-pressed="false">Match by match</button><button id="bR">Replay</button><button id="bRec" hidden>Record clip</button><button id="bShare" hidden>Save share card</button><button id="bLink">Copy link</button></div>
+<div id="my"></div><div class="hl" id="hl"></div><div id="info"></div>
+<div class="km" id="tot">0</div><div class="kml">km travelled by away fans this matchday</div><div id="st" style="margin-bottom:10px"></div>
+<div id="list"></div>
+<details><summary>See the PostGIS behind it</summary>
+<pre>-- territory: nearest stadium wins
+SELECT ST_Intersection(v.geom, e.geom)
+FROM (SELECT (ST_Dump(ST_VoronoiPolygons(
+  ST_Collect(geom)))).geom FROM stadiums) v, england e;
+
+-- three nearest rivals (KNN)
+SELECT name, ST_Distance(geom::geography,
+  :me::geography)/1000 AS km
+FROM stadiums ORDER BY geom &lt;-&gt; :me LIMIT 4;
+
+-- reach rings
+SELECT ST_Buffer(geom::geography, 100000)
+FROM stadiums WHERE club = :me;
+
+-- clubs within 100 km
+SELECT count(*) FROM stadiums
+WHERE ST_DWithin(geom::geography,
+  :me::geography, 100000);</pre></details>
+<details><summary>Load your PostGIS data</summary><p class="note">Run export_atlas.py, then pick the atlas.json it writes. It stays in this browser only.</p><input type="file" id="ld" accept=".json,application/json"><button id="ldr">Back to demo data</button><p class="note" id="ldm"></p></details>
+<p class="note" id="dn">Fixtures, kick-off times and results follow the published 2026/27 Premier League list. Two matches in gameweek 36 and ten in gameweek 37 were completed by elimination. Four of the gameweek 37 kick-offs (23 May, 15:00) are confirmed by other sources and the rest are assumed to share that slot. Broadcast picks can still move kick-offs, so refresh from the official feed with build_atlas.py. Stadium coordinates are approximate.</p>
+</div></div></div>
+<div class="wrap moment"><h2>The GIS lab</h2><p class="sub">Six signature experiments and three more. Everything is computed in your browser from stadium coordinates, real kick-off times and real results.</p>
+<div class="chips" id="tabs" role="group" aria-label="Lab experiments"><button data-tab="sky" aria-pressed="true">Matchday sky</button><button data-tab="ody" aria-pressed="false">Season odyssey</button><button data-tab="derby" aria-pressed="false">Derby radar</button><button data-tab="pop" aria-pressed="false">Who is closest</button><button data-tab="ct" aria-pressed="false">Contested ground</button><button data-tab="rt" aria-pressed="false">Road time</button><span class="tsep" aria-hidden="true"></span><button data-tab="miles" aria-pressed="false">Season miles</button><button data-tab="dist" aria-pressed="false">Distance vs results (early data)</button><button data-tab="drift" aria-pressed="false">Travel centre</button></div>
+<div id="p-sky"><div class="mwrap"><canvas id="pc" width="840" height="560" aria-label="Sunrise and sunset bars for every stadium, ordered from north to south"></canvas>
+<div class="mside"><label>Date <input type="date" id="dt"></label><div class="km" id="tlab">15:00</div><input type="range" id="tm" min="360" max="1260" step="5" value="900" aria-label="Time of day, UK local"><div id="mstat"></div><p class="note">UK local time. Sunrise and sunset use the sun at the horizon. Switch on the Daylight chip above to see night move across the map.</p></div></div>
+<h3 class="h3">Light calendar for one stadium</h3><p class="sub">Sunrise and sunset through the season, with every home game placed at its real kick-off time. Watch the sunset line jump when the clocks change.</p>
+<div class="mwrap"><canvas id="lc" width="840" height="340" aria-label="Season light calendar with home games"></canvas><div class="mside"><select id="lcs" aria-label="Choose a stadium"></select><div id="lcstat"></div></div></div></div>
+<div id="p-miles" hidden><p class="sub">The race to the most away miles. Press play and watch the season unfold gameweek by gameweek, using the real fixture list.</p><div class="mwrap"><canvas id="mc" width="840" height="560" aria-label="Bar race of cumulative away travel by club"></canvas>
+<div class="mside"><button id="mpb">Play</button><input type="range" id="mg" min="1" max="38" value="1" aria-label="Gameweek"><div class="km" id="mgl">GW 1</div><div id="mst"></div></div></div></div>
+<div id="p-derby" hidden><p class="sub">The twelve closest pairs of stadiums in the league, measured on the ellipsoid, with every date they meet this season. Tap a card to fly to the club on the map.</p><div class="dgrid" id="dg"></div></div>
+<div id="p-ody" hidden><p class="sub">One club, one season. Follow every away trip in order, from the first whistle in August to the last day in May.</p><div class="mwrap"><canvas id="oc" width="560" height="710" aria-label="Animated route of one club's away trips"></canvas><div class="mside"><select id="ods" aria-label="Choose a club"></select><button id="opb">Replay</button><input type="range" id="og" min="0" max="100" value="0" aria-label="Season progress"><div id="ost"></div><a id="satLink" class="cta sm" href="odyssey-satellite.html" hidden>Open on satellite</a></div></div></div>
+<div id="p-drift" hidden><p class="sub">Where did each gameweek’s travel “happen”? The average position of the ten matches, weighted by distance, so long trips pull the centre. It moves by tens of kilometres because the league is compact. An unweighted average never moves at all: every club plays once a week, so it always equals the league centre.</p><div class="mwrap"><canvas id="dk" width="560" height="710" aria-label="Path of the gameweek centre across the season"></canvas><div class="mside"><button id="dpb">Replay</button><input type="range" id="dg" min="0" max="37" value="0" aria-label="Gameweek"><div id="drs"></div></div></div></div>
+<div id="p-ct" hidden><p class="sub">Where is loyalty up for grabs? The bright bands are ground that lies within a few kilometres of the border between two territories. Pick how wide the band is. This measures geography, not fandom, because clubs also draw fans from far away.</p><div class="chips" id="ctw" role="group" aria-label="Band width"><button data-w="2" aria-pressed="false">2 km</button><button data-w="5" aria-pressed="true">5 km</button><button data-w="10" aria-pressed="false">10 km</button></div><div class="mwrap"><canvas id="ctc" width="560" height="710" aria-label="Map of the bands of ground close to the border between two club territories"></canvas><div class="mside"><div id="ctx"></div><div id="cts"></div><p class="note" id="ctn"></p></div></div></div>
+<div id="p-pop" hidden><p class="sub">How many people live closer to each stadium than to any other? Brighter means more people. It is the territory map, weighted by population.</p><div class="mwrap"><canvas id="ppc" width="560" height="710" aria-label="Map of territories shaded by the number of people closest to each stadium"></canvas><div class="mside"><div id="ppx"></div><div id="pps"></div><p class="note" id="ppn"></p></div></div></div>
+<div id="p-rt" hidden><p class="sub">Kilometres are not hours. Each line joins a club's rank by season distance to its rank by season road time. Where lines cross, the road network changes the story.</p><div class="mwrap"><canvas id="rtc" width="840" height="560" aria-label="Slope chart of club rank by distance against rank by road time"></canvas><div class="mside"><div id="rts"></div><p class="note" id="rtn"></p></div></div></div>
+<div id="p-dist" hidden><p class="sub">Each dot is a completed match: how far the away side travelled against its goal difference. A small sample and a simple model, so treat it as a conversation starter, not a verdict.</p><div class="mwrap"><canvas id="dc" width="840" height="460" aria-label="Scatter of away distance against goal difference"></canvas><div class="mside"><div id="dst"></div><p class="note">Travel is tangled up with club strength, so this shows correlation, not cause.</p></div></div></div></div>
+<div class="wrap method"><h2 data-ar="كيف نحسب؟">How it is calculated</h2>
+<div class="mgrid">
+<div><h4 data-ar="المسافات">Distances</h4><p data-ar="مسافة بخط مستقيم على سطح الأرض بين إحداثيات الملاعب. في PostGIS يخرج نفس الرقم من ST_Distance على نوع geography.">Straight-line distance over the Earth's surface between stadium coordinates. In PostGIS the same number comes from ST_Distance on the geography type.</p></div>
+<div><h4 data-ar="المناطق">Territories</h4><p data-ar="كل نقطة في إنجلترا تنتمي لأقرب ملعب إليها: مخطط فورونوي مقصوص على حدود إنجلترا. في PostGIS: ST_VoronoiPolygons.">Every point in England belongs to its nearest stadium: a Voronoi diagram clipped to a hand-traced outline of England. In PostGIS: ST_VoronoiPolygons.</p></div>
+<div><h4 data-ar="الشمس والضوء">Sun and light</h4><p data-ar="موضع الشمس بخوارزمية شمسية بدقة نحو نصف درجة، مع تغيير الساعة في بريطانيا. «كشافات» تعني أن الشمس تحت الأفق وقت الانطلاق.">The sun's position comes from a solar algorithm accurate to about half a degree, with UK clock changes. "Floodlights" means the sun is below the horizon at kick-off.</p></div>
+<div><h4 data-ar="الجدول والنتائج">Fixtures and results</h4><p data-ar="الجولة والموعد والنتيجة حسب القائمة المنشورة لموسم 2026/27. اثنتا عشرة مباراة اكتملت بالاستنتاج، وقد تتحرك المواعيد باختيارات البث.">Gameweek, date, kick-off and score follow the published 2026/27 list. Twelve matches were completed by elimination, and kick-offs can move with broadcast picks.</p></div>
+<div><h4 data-ar="الحدود">Limits</h4><p data-ar="إحداثيات الملاعب وحدود إنجلترا تقريبية. تحليل المسافة والنتائج عينته صغيرة ويُظهر ارتباطًا لا سببًا.">Stadium coordinates and the England outline are approximate. The distance and results chart uses a small sample and shows correlation, not cause.</p></div></div>
+<p class="note" data-ar="مشروع مستقل، وليس تابعًا للدوري الإنجليزي الممتاز ولا مدعومًا منه.">An independent project, not affiliated with or endorsed by the Premier League.</p></div>
+<footer>Spatial Football Analytics</footer>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="mbox"><h3 id="mt" data-ar="لمن تشجع؟">Who do you support?</h3><p data-ar="اختر ناديك لنعرض لك مباراتك القادمة ورحلة جماهيرك وضوء الشمس عند الانطلاق.">Pick your club and we will show your next match, your fans' journey and the light at kick-off.</p><div class="cg" id="cg"></div><button id="mSkip" class="ghost" data-ar="تخطّي">Skip</button></div></div>
+<script>
+let LANG='en';try{LANG=localStorage.getItem('lang')||(/^ar/i.test(navigator.language||'')?'ar':'en')}catch(e){}
+const AR={"Contested ground": "مناطق التنافس", "Where is loyalty up for grabs? The bright bands are ground that lies within a few kilometres of the border between two territories. Pick how wide the band is. This measures geography, not fandom, because clubs also draw fans from far away.": "أين تكون الولاءات مفتوحة؟ الأحزمة الساطعة هي أراضٍ تقع على بعد كيلومترات قليلة من الحدود بين منطقتين. اختر عرض الحزام. هذا قياس جغرافي لا قياس لعدد المشجعين، لأن الأندية تجذب جماهير من بعيد أيضًا.", "Contested area": "مساحة التنافس", "Most exposed club": "أكثر نادٍ مكشوفًا", "Most contested border": "أكثر حدود تنافسًا", "People in contested ground": "السكان في مناطق التنافس","Who is closest": "مَن الأقرب؟", "Road time": "زمن الطريق", "People closest": "السكان الأقرب", "Longest by road time": "الأطول زمنًا على الطريق", "How many people live closer to each stadium than to any other? Brighter means more people. It is the territory map, weighted by population.": "كم شخصًا يعيش أقرب لكل ملعب من أي ملعب آخر؟ كلما كان اللون أسطع زاد السكان. هي خريطة المناطق نفسها لكن موزونة بالسكان.", "Kilometres are not hours. Each line joins a club's rank by season distance to its rank by season road time. Where lines cross, the road network changes the story.": "الكيلومترات ليست ساعات. كل خط يربط ترتيب النادي بالمسافة طوال الموسم بترتيبه بزمن الطريق. حيث تتقاطع الخطوط، تغيّر شبكة الطرق القصة.", "People closest to each stadium": "السكان الأقرب لكل ملعب", "Largest catchment": "أكبر منطقة سكانًا", "Smallest catchment": "أصغر منطقة سكانًا", "The six London clubs share": "الأندية اللندنية الست تتقاسم", "By distance": "حسب المسافة", "By road time": "حسب زمن الطريق", "Most road time": "أكثر زمن على الطريق", "Biggest rank change": "أكبر تغيّر في الترتيب", "Longest trip by road": "أطول رحلة على الطريق", "Ranks higher by road time": "أعلى ترتيبًا بزمن الطريق", "Ranks lower by road time": "أقل ترتيبًا بزمن الطريق", "Season road time": "زمن الطريق في الموسم","Match by match":"مباراة بمباراة","Early data, so treat it as a conversation starter, not a verdict.":"بيانات مبكرة، فاعتبرها بداية نقاش لا حكمًا.","Open on satellite":"افتح على الأقمار الصناعية","Copy link":"نسخ الرابط","Copied":"تم النسخ","Premier League": "الدوري الإنجليزي", "Floodlight": "كشافات", "Midnight": "منتصف الليل", "Sunset": "غروب", "Territories": "المناطق", "Away days": "رحلات الجماهير", "Derby lines": "خطوط الديربي", "Daylight": "ضوء النهار", "Tour": "جولة", "Replay": "إعادة", "Record clip": "تسجيل مقطع", "Save share card": "حفظ بطاقة المشاركة", "Play": "تشغيل", "Pause": "إيقاف", "League view": "عرض الدوري", "Gameweek": "الجولة", "Gameweek headlines": "عناوين الجولة", "League at a glance": "الدوري بنظرة", "Tap a territory on the map to open that club.": "اضغط على منطقة في الخريطة لتفتح النادي.", "Tap a territory": "اضغط على منطقة", "km travelled by away fans this matchday": "كم قطعتها جماهير الضيوف في هذه الجولة", "See the PostGIS behind it": "شاهد PostGIS خلفه", "Load your PostGIS data": "حمّل بياناتك من PostGIS", "Back to demo data": "العودة للبيانات الأصلية", "Run export_atlas.py, then pick the atlas.json it writes. It stays in this browser only.": "شغّل build_atlas.py أو export_atlas.py ثم اختر ملف atlas.json. يبقى في هذا المتصفح فقط.", "Fixtures, kick-off times and results follow the published 2026/27 Premier League list. Two matches in gameweek 36 and ten in gameweek 37 were completed by elimination. Four of the gameweek 37 kick-offs (23 May, 15:00) are confirmed by other sources and the rest are assumed to share that slot. Broadcast picks can still move kick-offs, so refresh from the official feed with build_atlas.py. Stadium coordinates are approximate.": "الجدول والأوقات والنتائج حسب قائمة الدوري الإنجليزي المنشورة لموسم 2026/27. مباراتان في الجولة 36 وعشر في الجولة 37 اكتملت بالاستنتاج. أربعة مواعيد في الجولة 37 (23 مايو، 15:00) مؤكدة من مصادر أخرى والباقي مفترض بنفس الموعد. اختيارات البث قد تغيّر المواعيد، فحدّث من الـ feed الرسمي عبر build_atlas.py. إحداثيات الملاعب تقريبية.", "The GIS lab": "معمل نظم المعلومات الجغرافية", "Six signature experiments and three more. Everything is computed in your browser from stadium coordinates, real kick-off times and real results.": "ست تجارب أساسية وثلاث إضافية. كل شيء يُحسب في متصفحك من إحداثيات الملاعب وأوقات الانطلاق والنتائج الحقيقية.", "Matchday sky": "سماء يوم المباراة", "Season miles": "أميال الموسم", "Derby radar": "رادار الديربي", "Distance vs results (early data)": "المسافة مقابل النتائج (بيانات مبكرة)", "Season odyssey": "أوديسا الموسم", "Travel centre": "مركز الرحلات", "Date": "التاريخ", "UK local time. Sunrise and sunset use the sun at the horizon. Switch on the Daylight chip above to see night move across the map.": "بتوقيت بريطانيا. الشروق والغروب عند أفق الشمس. فعّل زر ضوء النهار بالأعلى لترى الليل يزحف على الخريطة.", "Light calendar for one stadium": "تقويم الضوء لملعب واحد", "Sunrise and sunset through the season, with every home game placed at its real kick-off time. Watch the sunset line jump when the clocks change.": "الشروق والغروب طوال الموسم، وكل مباراة على أرض النادي عند موعدها الحقيقي. لاحظ قفزة خط الغروب عند تغيير الساعة.", "The race to the most away miles. Press play and watch the season unfold gameweek by gameweek, using the real fixture list.": "سباق أكثر الأندية سفرًا. اضغط تشغيل وشاهد الموسم جولةً بجولة من الجدول الحقيقي.", "The twelve closest pairs of stadiums in the league, measured on the ellipsoid, with every date they meet this season. Tap a card to fly to the club on the map.": "أقرب اثنا عشر زوجًا من الملاعب، مقيسة على الإهليلج، مع كل مواعيد لقاءاتهم هذا الموسم. اضغط بطاقة لتطير الخريطة إلى النادي.", "Each dot is a completed match: how far the away side travelled against its goal difference. A small sample and a simple model, so treat it as a conversation starter, not a verdict.": "كل نقطة مباراة منتهية: المسافة التي قطعها الضيف مقابل فارق أهدافه. عينة صغيرة ونموذج بسيط، فاعتبره بداية نقاش لا حكمًا.", "Travel is tangled up with club strength, so this shows correlation, not cause.": "السفر متشابك مع قوة النادي، فهذا ارتباط وليس سببًا.", "One club, one season. Follow every away trip in order, from the first whistle in August to the last day in May.": "نادٍ واحد وموسم واحد. تابع كل رحلة خارج الأرض بالترتيب، من صافرة أغسطس إلى آخر يوم في مايو.", "Where did each gameweek’s travel “happen”? The average position of the ten matches, weighted by distance, so long trips pull the centre. It moves by tens of kilometres because the league is compact. An unweighted average never moves at all: every club plays once a week, so it always equals the league centre.": "أين «حدث» سفر كل جولة؟ متوسط موضع المباريات العشر موزونًا بالمسافة، فالرحلات الطويلة تسحب المركز. يتحرك عشرات الكيلومترات فقط لأن الدوري متقارب. المتوسط غير الموزون لا يتحرك أبدًا: كل نادٍ يلعب مرة كل أسبوع فيساوي دائمًا مركز الدوري.", "One way, in a straight line, from the stadium to each away ground.": "اتجاه واحد وبخط مستقيم، من الملعب إلى كل ملعب خارج الأرض.", "Not enough completed matches yet.": "لا توجد مباريات منتهية كافية بعد.", "Hardest three-gameweek stretch": "أصعب ثلاث جولات متتالية", "Closest pair": "أقرب ملعبين", "Most isolated": "الأكثر عزلة", "Longest away day": "أطول رحلة", "Centre of gravity": "مركز الثقل", "Territory": "المنطقة", "Stadium": "الملعب", "Nearest rivals": "أقرب المنافسين", "Farthest club": "أبعد نادٍ", "Clubs within 100 km": "أندية ضمن 100 كم", "Clubs within 250 km": "أندية ضمن 250 كم", "Sunrise and sunset": "الشروق والغروب", "This gameweek": "هذه الجولة", "Total away travel": "إجمالي السفر", "Average journey": "متوسط الرحلة", "Longest": "الأطول", "Shortest": "الأقصر", "Fans heading north or south": "جماهير تتجه شمالًا أو جنوبًا", "Centre of travel": "مركز الرحلات", "In daylight": "في ضوء النهار", "Under floodlights": "تحت الكشافات", "Earliest sunset": "أبكر غروب", "Latest sunset": "أتأخر غروب", "Sunset gap, north to south": "فارق الغروب، من الشمال للجنوب", "Home games": "مباريات على الأرض", "Most miles": "الأكثر سفرًا", "Fewest miles": "الأقل سفرًا", "Season gap": "الفارق في الموسم", "Matches analysed": "مباريات محلَّلة", "Correlation (r)": "الارتباط (r)", "Per extra 100 km": "لكل 100 كم إضافية", "Under 150 km": "أقل من 150 كم", "150 to 300 km": "150 إلى 300 كم", "Over 300 km": "أكثر من 300 كم", "Away trips": "رحلات خارج الأرض", "Total distance": "المسافة الكلية", "Longest trip": "أطول رحلة", "Land’s End to John o’Groats": "ليندز إند إلى جون أوجروتس", "Next match": "المباراة القادمة", "Visitors travel": "الزوار يسافرون", "You travel": "تسافر", "Light at kick-off": "الضوء وقت الانطلاق", "Sunset that day": "غروب ذلك اليوم", "Away trips left": "رحلات متبقية", "Nearest rival": "أقرب منافس", "Northernmost centre": "أقصى مركز شمالًا", "Southernmost centre": "أقصى مركز جنوبًا", "Distance wandered": "المسافة المقطوعة", "Busiest gameweek": "أكثر الجولات سفرًا", "heading": "باتجاه", "north": "الشمال", "north-east": "الشمال الشرقي", "east": "الشرق", "south-east": "الجنوب الشرقي", "south": "الجنوب", "south-west": "الجنوب الغربي", "west": "الغرب", "north-west": "الشمال الغربي", "northbound": "شمالًا", "southbound": "جنوبًا", "of": "من", "to": "إلى", "and": "و", "at": "في", "v": "ضد", "stadiums": "ملاعب", "times": "مرات", "matches": "مباريات", "points each": "نقطة لكل مباراة", "no matches": "لا مباريات", "from a rival": "عن أقرب منافس", "closest club is": "أقرب نادٍ هو", "No match": "لا مباراة", "Away at": "ضيف على", "Hosts": "يستضيف", "fans travel": "الجماهير تسافر", "territory": "منطقة", "from the stadium": "من الملعب", "floodlights": "كشافات", "sun": "شمس", "GW": "ج", "Daylight at kick-off": "ضوء النهار عند الانطلاق", "Low sun": "شمس منخفضة", "Floodlights": "كشافات", "Away win": "فوز للضيف", "Draw": "تعادل", "Away defeat": "خسارة للضيف", "Clocks go back": "الساعة ترجع", "Clocks go forward": "الساعة تتقدم", "Away goal difference, against kilometres travelled": "فارق أهداف الضيف مقابل الكيلومترات", "League centre": "مركز الدوري"};
+const tr=k=>LANG==='ar'&&AR[k]!=null?AR[k]:k,tt=(e,a)=>LANG==='ar'?a:e,KU=()=>LANG==='ar'?'كم':'km';
+function trC(s){if(AR[s]!=null)return AR[s];let m;if(m=s.match(/^Longest (.*)$/))return'الأطول '+m[1];if(m=s.match(/^Away miles after gameweek (\d+)$/))return'مسافات السفر بعد الجولة '+m[1];if(m=s.match(/^(.*), away trips$/))return m[1]+'، رحلات الخارج';if(m=s.match(/^(\d+) km$/))return m[1]+' كم';return s}
+{const P=CanvasRenderingContext2D.prototype,ft=P.fillText,st=P.strokeText;P.fillText=function(s,a,b){return ft.call(this,LANG==='ar'&&typeof s==='string'?trC(s):s,a,b)};P.strokeText=function(s,a,b){return st.call(this,LANG==='ar'&&typeof s==='string'?trC(s):s,a,b)}}
+
+const W=640,H=810,cv=document.getElementById('c'),dpr=Math.min(window.devicePixelRatio||1,2);
+cv.width=W*dpr;cv.height=H*dpr;const x=cv.getContext('2d');
+const P=(lo,la)=>[(lo+6)/8*W,(55.9-la)/6.1*H],KM=1.194,clamp01=v=>Math.max(0,Math.min(1,v));
+let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem('atlas')||'null')}catch(e){}
+if(!SAVED&&location.protocol!=='file:'){try{const xr=new XMLHttpRequest();xr.open('GET','atlas.json',false);xr.send();if(xr.status===200){const d=JSON.parse(xr.responseText);if(d&&d.clubs&&d.fixtures){SAVED=d;SAVED._srv=true}}}catch(e){}}
+const K=(SAVED&&SAVED.clubs)||[["ARS","Arsenal",51.555,-0.108],["AVL","Aston Villa",52.509,-1.885],["BOU","Bournemouth",50.735,-1.838],["BRE","Brentford",51.491,-0.289],["BHA","Brighton",50.862,-0.083],["CHE","Chelsea",51.482,-0.191],["COV","Coventry City",52.4488,-1.4958],["CRY","Crystal Palace",51.398,-0.086],["EVE","Everton",53.426,-3.004],["FUL","Fulham",51.475,-0.222],["HUL","Hull City",53.7463,-0.3677],["IPS","Ipswich Town",52.055,1.1445],["LEE","Leeds",53.778,-1.572],["LIV","Liverpool",53.431,-2.961],["MCI","Man City",53.483,-2.2],["MUN","Man United",53.463,-2.291],["NEW","Newcastle",54.976,-1.622],["NFO","Nott’m Forest",52.94,-1.133],["SUN","Sunderland",54.915,-1.388],["TOT","Tottenham",51.604,-0.066]];
+const idx=Object.fromEntries(K.map((k,i)=>[k[0],i]));
+
+const O=[[-2.03,55.81],[-1.8,55.67],[-1.72,55.61],[-1.58,55.47],[-1.57,55.33],[-1.55,55.2],[-1.48,55.13],[-1.42,55.02],[-1.37,54.91],[-1.33,54.84],[-1.17,54.69],[-1.15,54.63],[-1.0,54.58],[-0.61,54.49],[-0.52,54.43],[-0.39,54.28],[-0.27,54.21],[-0.08,54.12],[-0.19,54.08],[-0.16,53.91],[0.03,53.73],[0.11,53.58],[-0.03,53.56],[0.15,53.47],[0.25,53.34],[0.35,53.15],[0.33,53.1],[0.25,53.0],[0.1,52.95],[0.2,52.85],[0.38,52.8],[0.5,52.88],[0.49,52.95],[0.65,52.97],[0.85,52.97],[1.0,52.98],[1.3,52.93],[1.43,52.88],[1.54,52.82],[1.7,52.71],[1.74,52.6],[1.76,52.48],[1.68,52.32],[1.6,52.15],[1.6,52.08],[1.35,51.96],[1.28,51.94],[1.15,51.79],[1.0,51.8],[0.95,51.77],[0.75,51.73],[0.9,51.6],[0.72,51.53],[0.7,51.46],[0.77,51.44],[1.03,51.37],[1.2,51.38],[1.38,51.39],[1.42,51.33],[1.4,51.22],[1.32,51.12],[1.18,51.08],[1.08,51.05],[0.98,50.91],[0.77,50.93],[0.58,50.85],[0.47,50.83],[0.25,50.73],[0.1,50.77],[-0.14,50.82],[-0.37,50.8],[-0.54,50.8],[-0.68,50.78],[-0.78,50.72],[-0.95,50.78],[-1.08,50.78],[-1.3,50.84],[-1.5,50.74],[-1.76,50.71],[-1.85,50.72],[-1.95,50.65],[-1.95,50.6],[-2.1,50.6],[-2.25,50.61],[-2.45,50.6],[-2.45,50.52],[-2.93,50.72],[-3.07,50.7],[-3.4,50.62],[-3.5,50.54],[-3.52,50.45],[-3.5,50.4],[-3.64,50.22],[-3.78,50.23],[-3.9,50.27],[-4.15,50.33],[-4.22,50.31],[-4.45,50.35],[-4.65,50.33],[-4.8,50.22],[-5.03,50.14],[-5.04,50.05],[-5.2,49.96],[-5.25,50.02],[-5.32,50.08],[-5.47,50.12],[-5.7,50.07],[-5.67,50.16],[-5.48,50.21],[-5.4,50.24],[-5.3,50.28],[-5.08,50.42],[-4.95,50.55],[-4.76,50.67],[-4.55,50.83],[-4.53,51.02],[-4.4,51.0],[-4.25,51.04],[-4.26,51.14],[-4.12,51.21],[-3.83,51.23],[-3.6,51.22],[-3.47,51.21],[-3.33,51.18],[-3.13,51.21],[-3.0,51.24],[-3.0,51.3],[-2.98,51.35],[-2.85,51.44],[-2.76,51.49],[-2.72,51.52],[-2.65,51.62],[-2.68,51.7],[-2.72,51.81],[-2.64,51.84],[-2.75,51.93],[-3.0,51.95],[-3.12,52.07],[-3.05,52.19],[-3.05,52.34],[-3.1,52.45],[-3.15,52.55],[-3.13,52.66],[-3.08,52.79],[-3.06,52.87],[-3.05,52.93],[-2.95,52.97],[-2.88,53.1],[-2.93,53.17],[-3.0,53.25],[-3.08,53.29],[-3.18,53.39],[-3.05,53.44],[-3.03,53.5],[-3.02,53.65],[-3.06,53.82],[-3.03,53.93],[-2.9,54.07],[-2.9,54.17],[-3.2,54.1],[-3.26,54.05],[-3.28,54.2],[-3.42,54.35],[-3.65,54.5],[-3.6,54.55],[-3.55,54.65],[-3.5,54.72],[-3.4,54.87],[-3.2,54.95],[-3.06,54.99],[-2.9,55.05],[-2.7,55.07],[-2.6,55.2],[-2.47,55.35],[-2.2,55.48],[-2.17,55.6],[-2.25,55.65],[-2.1,55.75]].map(p=>P(p[0],p[1]));
+const S=K.map(k=>P(k[3],k[2]));
+function hav(a,b){const r=Math.PI/180,dl=(K[b][2]-K[a][2])*r,dn=(K[b][3]-K[a][3])*r,q=Math.sin(dl/2)**2+Math.cos(K[a][2]*r)*Math.cos(K[b][2]*r)*Math.sin(dn/2)**2;return 12742*Math.asin(Math.sqrt(q))}
+const D=K.map((_,a)=>K.map((_,b)=>hav(a,b)));
+const nn=(i,n)=>K.map((_,j)=>j).filter(j=>j!==i).sort((a,b)=>D[i][a]-D[i][b]).slice(0,n);
+const NN=K.map((_,i)=>nn(i,1)[0]),CR=S.map((p,i)=>S.some((q,j)=>j!==i&&Math.hypot(p[0]-q[0],p[1]-q[1])<34));
+function inE(px,py){let c=false;for(let i=0,j=O.length-1;i<O.length;j=i++){const a=O[i],b=O[j];if((a[1]>py)!==(b[1]>py)&&px<(b[0]-a[0])*(py-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
+const TH=[{n:'Premier League',b0:'#4a0d52',b1:'#1c0020',land:'#3a0540',line:'#00ff85',comet:'0,255,133',long:'233,0,82',ring:'4,245,255',pal:[[0,255,133],[4,245,255],[233,0,82],[150,60,255],[255,125,95]]},
+{n:'Floodlight',b0:'#0d4a36',b1:'#03130e',land:'#0f5640',line:'#f5e6a8',comet:'255,214,102',long:'255,90,90',ring:'255,255,255',pal:[[255,214,102],[255,255,255],[102,224,163],[255,138,76],[160,210,255]]},
+{n:'Midnight',b0:'#14245c',b1:'#050816',land:'#111c47',line:'#7aa2ff',comet:'90,230,255',long:'255,120,200',ring:'255,255,255',pal:[[122,162,255],[160,120,255],[255,120,200],[90,230,255],[255,200,120]]},
+{n:'Sunset',b0:'#5a1a36',b1:'#1a0610',land:'#43102b',line:'#ff9a5c',comet:'255,210,120',long:'255,95,120',ring:'110,220,230',pal:[[255,154,92],[255,95,120],[255,210,120],[190,110,255],[110,220,230]]}];
+let th=TH[0],col=K.map((_,i)=>th.pal[i%5]);
+const gw=420,gh=532,vo=document.createElement('canvas'),hl=document.createElement('canvas');vo.width=hl.width=gw;vo.height=hl.height=gh;
+const LS=S.map(a=>S.map(c=>Math.hypot(a[0]-c[0],a[1]-c[1]))),ID2=new Uint8Array(gw*gh),GAP=new Float32Array(gw*gh),INA=new Uint8Array(gw*gh),EDG=new Uint8Array(gw*gh),ID=new Uint8Array(gw*gh),CNT=new Array(K.length).fill(0);let TC=0;
+{const c=vo.getContext('2d'),im=c.createImageData(gw,gh);
+for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){const px=(i+.5)/gw*W,py=(j+.5)/gh*H;let d1=1e9,d2=1e9,b=0;
+for(let s=0;s<S.length;s++){const d=Math.sqrt((S[s][0]-px)**2+(S[s][1]-py)**2);if(d<d1){d2=d1;d1=d;b=s}else if(d<d2)d2=d}
+let best=1e9,bj=0;for(let s2=0;s2<S.length;s2++){if(s2===b)continue;const dx=S[s2][0]-px,dy=S[s2][1]-py,dd=(dx*dx+dy*dy-d1*d1)/(2*LS[b][s2]);if(dd<best){best=dd;bj=s2}}
+const e=d2-d1<1.3,o=(j*gw+i)*4,cc=col[b];ID[j*gw+i]=b;ID2[j*gw+i]=bj;GAP[j*gw+i]=best/KM;EDG[j*gw+i]=e?1:0;if(inE(px,py)){CNT[b]++;TC++;INA[j*gw+i]=1}
+im.data[o]=e?255:cc[0];im.data[o+1]=e?255:cc[1];im.data[o+2]=e?255:cc[2];im.data[o+3]=e?235:125}
+c.putImageData(im,0,0)}
+function paintVO(){const c=vo.getContext('2d'),im=c.createImageData(gw,gh);for(let n=0;n<gw*gh;n++){const e=EDG[n],cc=col[ID[n]],o=n*4;im.data[o]=e?255:cc[0];im.data[o+1]=e?255:cc[1];im.data[o+2]=e?255:cc[2];im.data[o+3]=e?235:125}c.putImageData(im,0,0)}
+function buildHL(s){const c=hl.getContext('2d'),im=c.createImageData(gw,gh),cc=col[s];for(let n=0;n<gw*gh;n++)if(ID[n]===s){im.data[n*4]=cc[0];im.data[n*4+1]=cc[1];im.data[n*4+2]=cc[2];im.data[n*4+3]=255}c.putImageData(im,0,0)}
+const eng=new Path2D();O.forEach((p,i)=>i?eng.lineTo(p[0],p[1]):eng.moveTo(p[0],p[1]));eng.closePath();
+let arcs=[],LONG,ARC={};const mk=FXg=>FXg.map(f=>{const ai=idx[f[0]],hi=idx[f[1]],a=S[ai],b=S[hi],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);
+return{f,a,b,ai,hi,c:[mx-dy*.28,my+dx*.28-L*.12],km:D[ai][hi]}});
+let GWC=null;
+
+function parseFX(t){const o=[];t.trim().split('\n').forEach(l=>{const a=l.trim().split(/\s+/);for(const p of a.slice(3)){const m=p.split(':'),h=m[0].split('-');o.push([h[1],h[0],+a[0],a[1],a[2],m[1]||null])}});return o}
+const FXD=`1 0821 2000 ARS-COV:3-0
+1 0822 1230 HUL-MUN:2-0
+1 0822 1500 EVE-CRY:2-0 IPS-SUN:2-1 NFO-LEE:0-1
+1 0822 1730 BRE-TOT:3-0
+1 0823 1400 BHA-AVL:4-0 MCI-BOU:2-1
+1 0823 1630 NEW-LIV:2-2
+1 0824 2000 FUL-CHE:2-3
+2 0828 2000 CRY-MCI:1-4
+2 0829 1230 LIV-NFO:2-2
+2 0829 1500 BOU-EVE:1-1 COV-HUL:0-1
+2 0829 1730 TOT-NEW:0-2
+2 0830 1400 CHE-BHA:4-3 LEE-BRE:1-1 SUN-FUL:1-0
+2 0830 1630 MUN-IPS:5-2
+2 0831 2000 AVL-ARS:0-1
+3 0904 2000 IPS-LIV:0-2
+3 0905 1230 NEW-BOU:2-2
+3 0905 1500 BRE-SUN:1-1 BHA-LEE:1-1 FUL-CRY:2-3 MCI-COV:1-0 NFO-TOT:0-0
+3 0905 1730 HUL-AVL:0-0
+3 0906 1400 EVE-MUN:2-2
+3 0906 1630 ARS-CHE:2-1
+4 0912 1500 AVL-NFO:1-2 BOU-BRE:2-2 CHE-HUL:2-2 CRY-IPS:2-3 LIV-FUL:0-0
+4 0912 1730 TOT-EVE:0-0
+4 0912 2000 SUN-ARS:0-2
+4 0913 1400 COV-BHA:0-5
+4 0913 1630 MUN-MCI:0-1
+4 0914 2000 LEE-NEW:4-1
+5 0918 2000 BRE-CHE:3-0
+5 0919 1230 TOT-AVL:2-3
+5 0919 1500 BHA-ARS:3-0 EVE-IPS:1-0 NEW-HUL:2-1
+5 0919 1730 NFO-COV:0-1
+5 0920 1400 BOU-LIV:0-1 LEE-CRY:0-0 MCI-SUN:5-3
+5 0920 1630 FUL-MUN:1-1
+6 1010 1230 ARS-LEE:2-1
+6 1010 1500 AVL-BRE:2-2 CHE-BOU:5-1 IPS-FUL:2-1 SUN-BHA:0-2
+6 1010 1730 MUN-TOT:1-1
+6 1011 1400 CRY-NFO:3-1 HUL-EVE:2-2
+6 1011 1630 LIV-MCI:0-3
+6 1012 2000 COV-NEW:4-1
+7 1017 1230 EVE-CHE:0-2
+7 1017 1500 BRE-LIV:1-2 FUL-HUL:1-0 MCI-IPS:3-2
+7 1017 1730 NEW-AVL:0-1
+7 1018 1400 BOU-SUN:2-0 BHA-CRY:5-0 LEE-MUN:1-1
+7 1018 1630 NFO-ARS:0-1
+7 1019 2000 TOT-COV:3-1
+8 1023 2000 IPS-NFO:1-1
+8 1024 1230 AVL-MCI:2-1
+8 1024 1500 ARS-EVE:2-0 COV-FUL:0-1
+8 1024 1730 CHE-TOT:0-2
+8 1025 1400 CRY-NEW:0-2 HUL-BRE:1-1 LIV-BHA:2-0 MUN-BOU:0-3
+8 1025 1630 SUN-LEE:0-0
+9 1031 1230 CHE-MUN:2-0
+9 1031 1500 BOU-LEE:2-0 BRE-NFO:2-0 COV-SUN:3-1 HUL-IPS:2-2 MCI-BHA:0-1
+9 1031 1730 TOT-CRY:2-0
+9 1031 2000 AVL-FUL:1-1
+9 1101 1630 LIV-ARS:0-1
+9 1102 2000 NEW-EVE:0-1
+10 1106 2000 EVE-COV:3-1
+10 1107 1230 LEE-TOT:1-0
+10 1107 1500 ARS-HUL:1-0 FUL-NEW:1-1
+10 1107 1730 NFO-MCI:3-1
+10 1108 1400 BHA-BRE:2-0 CRY-LIV:1-3 IPS-BOU:1-2 SUN-CHE:1-0
+10 1108 1630 MUN-AVL:4-4
+11 1121 1230 MCI-FUL
+11 1121 1500 AVL-SUN BOU-NFO CHE-LEE COV-CRY TOT-IPS
+11 1121 1730 NEW-ARS
+11 1122 1400 HUL-BHA
+11 1122 1630 LIV-MUN
+11 1123 2000 BRE-EVE
+12 1127 2000 NFO-CHE
+12 1128 1500 LEE-COV MUN-BRE
+12 1128 1730 IPS-AVL
+12 1129 1200 EVE-LIV
+12 1129 1405 BHA-NEW CRY-HUL FUL-BOU SUN-TOT
+12 1129 1630 ARS-MCI
+13 1201 2000 COV-IPS
+13 1202 1930 CHE-CRY HUL-NFO LIV-SUN MCI-LEE
+13 1202 2015 AVL-EVE BOU-BHA BRE-ARS NEW-MUN
+13 1203 2000 TOT-FUL
+14 1205 1230 CHE-LIV
+14 1205 1500 AVL-CRY BOU-HUL LEE-IPS MUN-COV
+14 1205 1730 NFO-BHA
+14 1205 2000 BRE-MCI
+14 1206 1400 EVE-FUL NEW-SUN
+14 1206 1630 TOT-ARS
+15 1212 1500 FUL-BRE IPS-NEW LIV-LEE
+15 1212 1730 MCI-CHE
+15 1213 1400 ARS-BOU BHA-EVE SUN-NFO
+15 1213 1630 COV-AVL
+15 1213 1900 CRY-MUN
+15 1214 2000 HUL-TOT
+16 1219 1230 BRE-NEW
+16 1219 1500 BOU-COV LEE-FUL MCI-HUL
+16 1219 1730 LIV-TOT
+16 1220 1400 BHA-IPS NFO-EVE SUN-CRY
+16 1220 1630 ARS-MUN
+16 1221 2000 CHE-AVL
+17 1226 1230 AVL-LEE
+17 1226 1500 EVE-SUN FUL-BHA IPS-BRE TOT-BOU
+17 1226 1730 HUL-LIV
+17 1226 2000 NEW-MCI
+17 1227 1400 COV-CHE
+17 1227 1630 MUN-NFO
+17 1227 1900 CRY-ARS
+18 1229 1930 HUL-LEE TOT-BHA
+18 1229 2015 EVE-MCI
+18 1230 1930 COV-BRE CRY-BOU FUL-ARS MUN-SUN NEW-NFO
+18 1230 2015 AVL-LIV IPS-CHE
+19 0101 2000 LEE-EVE
+19 0102 1230 BHA-MUN
+19 0102 1500 ARS-IPS BRE-CRY LIV-COV NFO-FUL SUN-HUL
+19 0102 1730 BOU-AVL
+19 0103 1400 CHE-NEW
+19 0103 1630 MCI-TOT
+20 0105 1930 ARS-BRE BHA-BOU EVE-AVL NFO-HUL
+20 0105 2015 SUN-LIV
+20 0106 1930 CRY-CHE FUL-TOT IPS-COV
+20 0106 2015 LEE-MCI
+20 0107 2000 MUN-NEW
+21 0116 1500 AVL-MUN BOU-IPS BRE-BHA CHE-SUN COV-EVE HUL-ARS LIV-CRY MCI-NFO NEW-FUL TOT-LEE
+22 0123 1500 ARS-NEW BHA-MCI CRY-TOT EVE-BRE FUL-AVL IPS-HUL LEE-CHE MUN-LIV NFO-BOU SUN-COV
+23 0130 1500 AVL-IPS BOU-FUL BRE-MUN CHE-NFO COV-LEE HUL-CRY LIV-EVE MCI-ARS NEW-BHA TOT-SUN
+24 0206 1500 ARS-LIV BHA-HUL CRY-COV EVE-NEW FUL-MCI IPS-TOT LEE-BOU MUN-CHE NFO-BRE SUN-AVL
+25 0210 2000 AVL-BOU COV-LIV CRY-BRE EVE-LEE FUL-NFO HUL-SUN IPS-ARS MUN-BHA NEW-CHE TOT-MCI
+26 0220 1500 ARS-FUL BOU-CRY BRE-COV BHA-TOT CHE-IPS LEE-AVL LIV-HUL MCI-NEW NFO-MUN SUN-EVE
+27 0227 1500 AVL-CHE COV-BOU CRY-SUN EVE-NFO FUL-LEE HUL-MCI IPS-BHA MUN-ARS NEW-BRE TOT-LIV
+28 0303 2000 ARS-CRY BOU-TOT BRE-IPS BHA-FUL CHE-COV LEE-HUL LIV-AVL MCI-EVE NFO-NEW SUN-MUN
+29 0313 1500 AVL-HUL BOU-NEW CHE-ARS COV-MCI CRY-FUL LEE-BHA LIV-IPS MUN-EVE TOT-NFO SUN-BRE
+30 0320 1500 ARS-SUN BRE-BOU BHA-COV EVE-TOT FUL-LIV HUL-CHE IPS-CRY MCI-MUN NEW-LEE NFO-AVL
+31 0410 1500 AVL-BHA BOU-MCI CHE-FUL COV-ARS CRY-EVE LEE-NFO LIV-NEW MUN-HUL TOT-BRE SUN-IPS
+32 0417 1500 ARS-AVL BRE-LEE BHA-CHE EVE-BOU FUL-SUN HUL-COV IPS-MUN MCI-CRY NEW-TOT NFO-LIV
+33 0424 1500 AVL-COV BOU-ARS BRE-FUL CHE-MCI EVE-BHA LEE-LIV MUN-CRY NEW-IPS NFO-SUN TOT-HUL
+34 0501 1500 ARS-TOT BHA-NFO COV-MUN CRY-AVL FUL-EVE HUL-BOU IPS-LEE LIV-CHE MCI-BRE SUN-NEW
+35 0508 1500 BOU-MUN BRE-AVL BHA-SUN EVE-HUL FUL-IPS LEE-ARS MCI-LIV NEW-COV NFO-CRY TOT-CHE
+36 0515 1500 ARS-NFO AVL-NEW CHE-EVE COV-TOT CRY-BHA HUL-FUL IPS-MCI LIV-BRE
+36 0515 1500 MUN-LEE SUN-BOU
+37 0523 1500 BHA-LIV BOU-CHE BRE-HUL FUL-COV LEE-SUN MCI-AVL NEW-CRY NFO-IPS TOT-MUN EVE-ARS
+38 0530 1600 ARS-BHA AVL-TOT CHE-BRE COV-NFO CRY-LEE HUL-NEW IPS-EVE LIV-BOU MUN-FUL SUN-MCI`;
+const FXA=(SAVED&&SAVED.fixtures&&SAVED.fixtures.length)?SAVED.fixtures.map(f=>[f[0],f[1],f[2]||1,f[3]||null,f[4]||null,f[5]||null]):parseFX(FXD);
+const bz=(r,t)=>{const u=1-t;return[u*u*r.a[0]+2*u*t*r.c[0]+t*t*r.b[0],u*u*r.a[1]+2*u*t*r.c[1]+t*t*r.b[1]]};
+const mLo=K.reduce((s,k)=>s+k[3],0)/K.length,mLa=K.reduce((s,k)=>s+k[2],0)/K.length,CEN=P(mLo,mLa);
+const CI=S.reduce((m,s,i)=>Math.hypot(s[0]-CEN[0],s[1]-CEN[1])<Math.hypot(S[m][0]-CEN[0],S[m][1]-CEN[1])?i:m,0);
+const list=document.getElementById('list'),order=[...arcs.keys()].sort((p,q)=>arcs[q].km-arcs[p].km);
+order.forEach(i=>{const a=arcs[i],d=document.createElement('div');d.className='row';
+d.innerHTML='<span>'+K[a.ai][1]+' '+tr('at')+' '+K[a.hi][1]+'</span><b>'+Math.round(a.km)+' km</b><span class="bar"><i></i></span>';d.onclick=()=>pick(a.ai);a.row=d;list.appendChild(d);a.bar=d.querySelector('i')});
+const L={T:true,J:true,D:false,N:false},cur={k:1,tx:0,ty:0},tgt={k:1,tx:0,ty:0};
+let NM=null,sel=-1,n3=[],T0=performance.now(),ta=0,hov=-1,ripple=0,drag=null,moved=0,tc='';
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $=id=>document.getElementById(id),tip=$('tip'),tot=$('tot'),info=$('info'),selEl=$('sel');
+selEl.innerHTML='<option value="-1">League view</option>'+K.map((k,i)=>[k[1],i]).sort().map(p=>'<option value="'+p[1]+'">'+p[0]+'</option>').join('');
+const kv=(a,b)=>'<div class="kv"><span>'+a+'</span><b>'+b+'</b></div>',km=v=>Math.round(v)+' '+KU();
+function clampT(){tgt.tx=Math.min(0,Math.max(W-W*tgt.k,tgt.tx));tgt.ty=Math.min(0,Math.max(H-H*tgt.k,tgt.ty))}
+function card(){
+if(sel<0){let bi=0,bj=1;for(let i=0;i<K.length;i++)for(let j=i+1;j<K.length;j++)if(D[i][j]<D[bi][bj]){bi=i;bj=j}
+let lo=0;K.forEach((_,i)=>{if(D[i][NN[i]]>D[lo][NN[lo]])lo=i});
+info.style.borderColor='var(--line)';
+info.innerHTML='<h2>'+tr('League at a glance')+'</h2>'+kv(tr('Closest pair'),K[bi][1]+' '+tr('and')+' '+K[bj][1]+', '+D[bi][bj].toFixed(1)+' '+KU())+kv(tr('Most isolated'),K[lo][1]+', '+km(D[lo][NN[lo]])+' '+tr('from a rival'))+kv(tr('Longest away day'),K[LONG.ai][1]+' '+tr('at')+' '+K[LONG.hi][1]+', '+km(LONG.km))+kv(tr('Centre of gravity'),tr('closest club is')+' '+K[CI][1])+'<p class="note">'+tr('Tap a territory on the map to open that club.')+'</p>';return}
+const i=sel,c=col[i],r=ARC[i],far=D[i].indexOf(Math.max(...D[i])),w=v=>D[i].filter((d,j)=>j!==i&&d<=v).length;
+info.style.borderColor='rgb('+c+')';
+info.innerHTML='<h2>'+K[i][1]+'</h2>'+kv(tr('Territory'),(CNT[i]/TC*100).toFixed(1)+'% of England')+kv(tr('People closest'),fmP(POP.club[i])+(POP.tot?', '+(POP.club[i]/POP.tot*100).toFixed(1)+'%':''))+kv(tr('Stadium'),K[i][2].toFixed(3)+', '+K[i][3].toFixed(3))+kv(tr('Nearest rivals'),n3.map(j=>K[j][1]+' '+km(D[i][j])).join('<br>'))+kv(tr('Farthest club'),K[far][1]+', '+km(D[i][far]))+kv(tr('Clubs within 100 km'),w(100))+kv(tr('Clubs within 250 km'),w(250))+kv(tr('Sunrise and sunset'),RS[i]?hm(RS[i].rise)+' '+tr('and')+' '+hm(RS[i].set):'n/a')+kv(tr('This gameweek'),!r?tr('No match'):r.ai===i?tr('Away at')+' '+K[r.hi][1]+', '+km(r.km):tr('Hosts')+' '+K[r.ai][1]+', '+tr('fans travel')+' '+km(r.km))}
+function pick(i){if(reelI>=0&&!reelBusy){clearTimeout(reelT);reelI=-1;$('bReel').setAttribute('aria-pressed',false);arcs.forEach(x=>x.row&&x.row.classList.remove('on'))}if(NM){L.J=NM.prevJ;setChips()}NM=null;sel=i;selEl.value=i;
+if(i>=0){buildHL(i);n3=nn(i,3);tgt.k=1.8;tgt.tx=W/2-S[i][0]*1.8;tgt.ty=H/2-S[i][1]*1.8;ripple=performance.now()}else{tgt.k=1;tgt.tx=0;tgt.ty=0}
+clampT();card()}
+selEl.onchange=()=>pick(+selEl.value);
+document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{const k=b.dataset.l;L[k]=!L[k];b.setAttribute('aria-pressed',L[k])});
+$('bR').onclick=()=>{T0=performance.now();ta=0};
+function zoomTo(nk,px,py){nk=Math.max(1,Math.min(4,nk));const wx=(px-tgt.tx)/tgt.k,wy=(py-tgt.ty)/tgt.k;tgt.k=nk;tgt.tx=px-wx*nk;tgt.ty=py-wy*nk;clampT()}
+$('zi').onclick=()=>zoomTo(tgt.k*1.4,W/2,H/2);$('zo').onclick=()=>zoomTo(tgt.k/1.4,W/2,H/2);$('zr').onclick=()=>pick(-1);
+addEventListener('keydown',e=>{if(e.key==='Escape')pick(-1)});
+const cp=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]};
+const toW=e=>{const p=cp(e);return[(p[0]-cur.tx)/cur.k,(p[1]-cur.ty)/cur.k]};
+const near=w=>{let b=0,bd=1e9;S.forEach((s,i)=>{const d=Math.hypot(s[0]-w[0],s[1]-w[1]);if(d<bd){bd=d;b=i}});return b};
+cv.addEventListener('wheel',e=>{e.preventDefault();const p=cp(e);zoomTo(tgt.k*(e.deltaY<0?1.25:.8),p[0],p[1])},{passive:false});
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,tx:tgt.tx,ty:tgt.ty};moved=0});
+cv.addEventListener('pointermove',e=>{const sc=W/cv.getBoundingClientRect().width;
+if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;moved=Math.max(moved,Math.hypot(dx,dy));if(moved>5&&tgt.k>1){tgt.tx=drag.tx+dx*sc;tgt.ty=drag.ty+dy*sc;clampT();cur.tx=tgt.tx;cur.ty=tgt.ty}}
+const w=toW(e);if(inE(w[0],w[1])){hov=near(w);const m=cv.parentElement.getBoundingClientRect();const lo=w[0]/W*8-6,la=55.9-w[1]/H*6.1;tip.textContent=K[hov][1]+' '+tr('territory')+', '+km(Math.hypot(w[0]-S[hov][0],w[1]-S[hov][1])/KM)+' '+tr('from the stadium')+', '+la.toFixed(2)+'°N '+Math.abs(lo).toFixed(2)+'°'+(lo<0?'W':'E');tip.style.left=Math.max(8,Math.min(e.clientX-m.left+12,m.width-tip.offsetWidth-8))+'px';tip.style.top=(e.clientY-m.top+12)+'px';tip.style.opacity=1}else{hov=-1;tip.style.opacity=0}});
+cv.addEventListener('pointerup',e=>{if(drag&&moved<=5){const w=toW(e);pick(inE(w[0],w[1])?near(w):-1)}drag=null});
+cv.addEventListener('pointerleave',()=>{hov=-1;tip.style.opacity=0});
+function lab(t,px,py,sz,c){x.font='600 '+sz+'px system-ui,sans-serif';x.lineWidth=sz/3;x.strokeStyle=th.b1;x.strokeText(t,px,py);x.fillStyle=c;x.fillText(t,px,py)}
+function frame(now){const T=reduce?99:(now-T0)/1000;
+for(const k of['k','tx','ty'])cur[k]=reduce?tgt[k]:cur[k]+(tgt[k]-cur[k])*.14;
+const nt=tgt.k>1.05?'none':'pan-y';if(nt!==tc){cv.style.touchAction=nt;tc=nt}
+ta+=((L.T?((L.J||L.D)?.55:1):0)-ta)*.06;const intro=Math.min(1,T/1.6),s=1/Math.sqrt(cur.k);
+x.setTransform(dpr,0,0,dpr,0,0);
+const g=x.createRadialGradient(W*.5,H*.45,60,W*.5,H*.5,H*.7);g.addColorStop(0,th.b0);g.addColorStop(1,th.b1);x.fillStyle=g;x.fillRect(0,0,W,H);
+PT.forEach(q=>{q.y-=q.v*.016;if(q.y<0)q.y=H;x.fillStyle='rgba('+th.comet+','+(.12+.12*Math.sin(T*1.5+q.p))+')';x.beginPath();x.arc(q.x,q.y,q.r,0,7);x.fill()});
+x.setTransform(dpr*cur.k,0,0,dpr*cur.k,dpr*cur.tx,dpr*cur.ty);
+x.strokeStyle='#ffffff10';x.lineWidth=1;for(let lo=-6;lo<=2;lo++){const p=P(lo,0)[0];x.beginPath();x.moveTo(p,0);x.lineTo(p,H);x.stroke()}
+for(let la=50;la<=55;la++){const p=P(0,la)[1];x.beginPath();x.moveTo(0,p);x.lineTo(W,p);x.stroke()}
+x.save();x.fillStyle=th.land;x.fill(eng);x.clip(eng);
+x.imageSmoothingEnabled=true;x.globalAlpha=(ta*intro)*(sel>=0?.6:1)+.04;x.drawImage(vo,0,0,W,H);
+if(sel>=0&&L.T){x.globalAlpha=.5+.15*Math.sin(T*3);x.drawImage(hl,0,0,W,H)}
+if(L.T&&hov>=0&&hov!==sel){x.globalAlpha=.14;x.fillStyle='#fff';x.beginPath();x.arc(S[hov][0],S[hov][1],60,0,7);x.fill()}
+const sw=((T*.35)%1.4-.2)*H;x.globalAlpha=.06*(1-ta*.6);x.fillStyle='#fff';x.fillRect(0,sw,W,40);if(L.N){x.globalAlpha=1;x.drawImage(SK,0,0,W,H)}
+x.restore();
+x.save();x.shadowColor=th.line;x.shadowBlur=14;x.strokeStyle=th.line;x.lineWidth=1.6*s;x.stroke(eng);x.restore();
+CITY.forEach(c=>{const p=c[1];x.fillStyle='rgba(255,255,255,.35)';x.beginPath();x.arc(p[0],p[1],1.8*s,0,7);x.fill();x.font='500 '+8.5*s+'px system-ui,sans-serif';x.fillStyle='rgba(255,255,255,.42)';x.fillText(c[0],p[0]+4*s,p[1]+3*s)});
+if(L.D){x.save();x.setLineDash([5*s,5*s]);x.lineDashOffset=-T*12*s;x.strokeStyle='rgba('+th.long+',.75)';x.lineWidth=1.4*s;
+K.forEach((_,i)=>{const j=NN[i];if(i<j||NN[j]!==i){x.beginPath();x.moveTo(S[i][0],S[i][1]);x.lineTo(S[j][0],S[j][1]);x.stroke()}});x.restore()}
+if(sel>=0){const c=S[sel];x.save();x.setLineDash([4*s,6*s]);x.strokeStyle='rgba('+th.ring+',.5)';x.lineWidth=1.2*s;
+[50,100,200].forEach(k=>{x.beginPath();x.arc(c[0],c[1],k*KM,0,7);x.stroke()});x.restore();
+[50,100,200].forEach(k=>lab(k+' '+KU(),c[0]+k*KM*.71+3,c[1]-k*KM*.71,10*s,'rgb('+th.ring+')'));
+const p=(T*.4)%1;x.strokeStyle='rgba('+th.ring+','+(1-p)*.3+')';x.lineWidth=2*s;x.beginPath();x.arc(c[0],c[1],p*200*KM,0,7);x.stroke();
+n3.forEach(j=>{x.strokeStyle='rgba(255,255,255,.7)';x.lineWidth=1.3*s;x.beginPath();x.moveTo(c[0],c[1]);x.lineTo(S[j][0],S[j][1]);x.stroke();
+lab(km(D[sel][j]),(c[0]+S[j][0])/2+4,(c[1]+S[j][1])/2,10*s,'#fff')})}
+let sum=0;
+arcs.forEach((r,i)=>{const p=clamp01((T-.8-i*.5)/2.6),e=p<1?1-Math.pow(1-p,3):1;sum+=r.km*e;r.bar.style.width=e*100+'%';
+const inv=sel>=0&&(r.ai===sel||r.hi===sel);if(e<=0||!(L.J||inv))return;
+const dim=sel>=0&&!inv?.3:1,rgb=r===LONG?th.long+',':inv?th.ring+',':th.comet+',';x.lineCap='round';const n=48;
+for(let q=0;q<n;q++){const u0=q/n*e,u1=(q+1)/n*e,al=(.12+.88*Math.max(0,1-(e-u1)/.4)*(e<1?1:.45))*dim,a=bz(r,u0),b=bz(r,u1);
+x.strokeStyle='rgba('+rgb+al.toFixed(3)+')';x.lineWidth=(1+2*al)*s;x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke()}
+if(e<1){const h=bz(r,e);x.save();x.shadowColor='rgb('+rgb.slice(0,-1)+')';x.shadowBlur=18;x.fillStyle='#fff';x.beginPath();x.arc(h[0],h[1],3.6*s,0,7);x.fill();x.restore()}
+else if(dim===1){const k=(T*.5+i*.13)%1,h=bz(r,k);x.fillStyle='rgba('+rgb+'.7)';x.beginPath();x.arc(h[0],h[1],2.2*s,0,7);x.fill();
+const ring=(T*1.2+i*.2)%1;x.strokeStyle='rgba('+th.ring+','+(1-ring)*.7+')';x.lineWidth=1.5*s;x.beginPath();x.arc(r.b[0],r.b[1],(4+ring*16)*s,0,7);x.stroke();
+if(r===LONG||inv){const m=bz(r,.5),w=(r===LONG?96:62)*s;x.fillStyle=r===LONG?'rgb('+th.long+')':'rgb('+th.ring+')';x.beginPath();x.roundRect(m[0]-w/2,m[1]-30*s,w,20*s,10*s);x.fill();
+x.fillStyle=r===LONG?'#fff':th.b1;x.font='600 '+11*s+'px system-ui,sans-serif';x.textAlign='center';x.fillText(r===LONG?'Longest '+km(r.km):km(r.km),m[0],m[1]-16*s);x.textAlign='start'}}});
+if(ripple&&sel>=0){const dt=(performance.now()-ripple)/1000;if(dt<1.2){x.strokeStyle='rgba(255,255,255,'+(1-dt/1.2)*.8+')';x.lineWidth=2.5*s;x.beginPath();x.arc(S[sel][0],S[sel][1],dt*260,0,7);x.stroke()}}
+drawNM(s);
+S.forEach((p,i)=>{const c=col[i],pu=.5+.5*Math.sin(T*2+i),on=i===sel;x.fillStyle='rgba('+c+','+(.25+.2*pu)+')';x.beginPath();x.arc(p[0],p[1],(on?11:7+3*pu)*s,0,7);x.fill();
+x.fillStyle='#fff';x.beginPath();x.arc(p[0],p[1],(on?4:2.8)*s,0,7);x.fill();
+if(!CR[i]||cur.k>2.4||on||i===hov)lab(K[i][0],p[0]+(K[i][3]<-2?-28*s:8*s),p[1]+3*s,(on?12:10)*s,on||i===hov?'#fff':'#e6d3ee')});
+drawNMtop(s);
+x.save();x.translate(CEN[0],CEN[1]);x.rotate(T*.8);x.strokeStyle='rgb('+th.ring+')';x.lineWidth=1.5*s;x.strokeRect(-5*s,-5*s,10*s,10*s);x.restore();
+if(GWC){x.save();x.strokeStyle='rgb('+th.comet+')';x.lineWidth=2*s;x.beginPath();x.arc(GWC[0],GWC[1],8*s,0,7);x.moveTo(GWC[0]-12*s,GWC[1]);x.lineTo(GWC[0]+12*s,GWC[1]);x.moveTo(GWC[0],GWC[1]-12*s);x.lineTo(GWC[0],GWC[1]+12*s);x.stroke();x.restore();if(cur.k>1.4)lab('Centre of travel',GWC[0]+10*s,GWC[1]-8*s,9*s,'rgb('+th.comet+')')}
+if(cur.k>1.4)lab('League centre',CEN[0]+9*s,CEN[1]+17*s,9*s,'rgb('+th.ring+')');
+x.setTransform(dpr,0,0,dpr,0,0);
+const vg=x.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.5)');x.fillStyle=vg;x.fillRect(0,0,W,H);
+let sk=100;for(const c of[10,25,50,100,200]){sk=c;if(c*KM*cur.k>=70)break}
+const sl=sk*KM*cur.k;x.strokeStyle='rgba(255,255,255,.85)';x.lineWidth=2;x.beginPath();x.moveTo(20,H-20);x.lineTo(20,H-14);x.lineTo(20+sl,H-14);x.lineTo(20+sl,H-20);x.stroke();lab(sk+' '+KU(),20,H-26,11,'#fff');
+x.save();x.translate(44,56);x.fillStyle='rgba(255,255,255,.9)';x.beginPath();x.moveTo(0,-18);x.lineTo(7,8);x.lineTo(0,3);x.lineTo(-7,8);x.closePath();x.fill();x.restore();lab('N',39,28,12,'#fff');
+tot.textContent=Math.round(sum).toLocaleString('en-US');
+requestAnimationFrame(frame)}
+const PT=Array.from({length:70},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.4,v:Math.random()*8+3,p:Math.random()*6}));
+const CITY=[["Bristol",51.45,-2.59],["Southampton",50.9,-1.4],["Norwich",52.63,1.3],["Plymouth",50.37,-4.14],["Sheffield",53.38,-1.47],["York",53.96,-1.08],["Carlisle",54.89,-2.94],["Exeter",50.72,-3.53],["Cambridge",52.2,.12],["Oxford",51.75,-1.26]].map(c=>[c[0],P(c[2],c[1])]);
+const TE=$('themes');TH.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t.n;b.setAttribute('aria-pressed',i===0);b.onclick=()=>{th=t;col=K.map((_,j)=>t.pal[j%5]);paintVO();if(sel>=0)buildHL(sel);drawLab();document.querySelector('.map').style.background=t.b1;[...TE.children].forEach((c,j)=>c.setAttribute('aria-pressed',TH[j]===t));card()};TE.appendChild(b)});
+let tour=0;$('bTour').onclick=function(){if(tour){clearInterval(tour);tour=0}else{pick((sel+1)%K.length);tour=setInterval(()=>pick((sel+1)%K.length),3600)}this.setAttribute('aria-pressed',!!tour)};
+$('ld').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t),ok=Array.isArray(d.clubs)&&d.clubs.length>1&&d.clubs.length<61&&d.clubs.every(c=>c.length>3&&isFinite(c[2])&&isFinite(c[3]));if(!ok)throw 0;const cs=new Set(d.clubs.map(c=>c[0]));d.fixtures=(d.fixtures||[]).filter(q=>cs.has(q[0])&&cs.has(q[1]));if(!d.fixtures.length)throw 0;localStorage.setItem('atlas',JSON.stringify(d));location.reload()}catch(err){$('ldm').textContent='That file is not a valid atlas.json (it needs clubs and at least one fixture).'}})};
+$('ldr').onclick=()=>{try{localStorage.removeItem('atlas')}catch(e){}location.reload()};
+
+let rec=0,DL=null;
+(window.claude?claude.use('downloads'):Promise.resolve(null)).then(d=>{DL=d;$('bRec').hidden=!(d&&window.MediaRecorder&&cv.captureStream);$('bShare').hidden=!d}).catch(()=>{});
+$('bRec').onclick=()=>{if(!DL||rec)return;rec=1;pick(-1);T0=performance.now();ta=0;const mt=['video/webm;codecs=vp9','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));if(!mt){rec=0;return}const r=new MediaRecorder(cv.captureStream(30),{mimeType:mt,videoBitsPerSecond:5e6}),ch=[];r.ondataavailable=e=>e.data.size&&ch.push(e.data);r.onstop=()=>{rec=0;$('bRec').textContent='Record clip';DL.save({filename:'premier-league-atlas.webm',data:new Blob(ch,{type:'video/webm'})}).catch(()=>{})};r.start();$('bRec').textContent='Recording';setTimeout(()=>r.stop(),11000)};
+const rad=Math.PI/180,SLOTS=[[0,750],[0,900],[0,900],[0,900],[0,900],[0,900],[0,1050],[1,840],[1,990],[2,1200]];
+const lastSun=(y,m)=>{const d=new Date(Date.UTC(y,m+1,0));return d.getUTCDate()-d.getUTCDay()};
+const ukOff=(y,mo,da)=>{const t=Date.UTC(y,mo,da,12);return t>=Date.UTC(y,2,lastSun(y,2),1)&&t<Date.UTC(y,9,lastSun(y,9),1)?1:0};
+const hm=m=>{m=Math.round(m);m=(m%1440+1440)%1440;return('0'+(m/60|0)).slice(-2)+':'+('0'+m%60).slice(-2)};
+function sunEl(lat,lon,ms){const d=ms/864e5+2440587.5-2451545,g=(357.529+.98560028*d)*rad,L=(280.459+.98564736*d+1.915*Math.sin(g)+.02*Math.sin(2*g))*rad,e=(23.439-4e-7*d)*rad,ra=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L)),dec=Math.asin(Math.sin(e)*Math.sin(L)),H=((18.697374558+24.06570982441908*d)*15+lon)*rad-ra;return Math.asin(Math.sin(lat*rad)*Math.sin(dec)+Math.cos(lat*rad)*Math.cos(dec)*Math.cos(H))/rad}
+function DI(){const d=new Date($('dt').value+'T00:00:00Z');return isNaN(d)?null:{ms:d.getTime(),off:ukOff(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())}}
+let RS=[],rsKey='';
+function calcRS(di){RS=K.map(k=>{let up=null,dn=null;for(let m=0;m<1440;m+=5){if(sunEl(k[2],k[3],di.ms+m*6e4)>-.833){if(up==null)up=m;dn=m}}return up==null?null:{rise:up+60*di.off,set:dn+60*di.off}});rsKey=$('dt').value}
+const SK=document.createElement('canvas');SK.width=64;SK.height=80;
+const skyC=e=>e<-12?[4,6,30,175]:e<-6?[18,18,70,150]:e<0?[140,60,110,100-e*8]:e<8?[255,170,70,Math.round(100*(1-e/8))]:[0,0,0,0];
+const pc=$('pc'),OS=K.map((_,i)=>i).sort((a,b)=>K[b][2]-K[a][2]);
+function drawBars(){const g=pc.getContext('2d'),A0=360,A1=1260,x0=130,x1=820,n=K.length,rh=Math.min(24,500/n),X=m=>x0+(Math.min(A1,Math.max(A0,m))-A0)/(A1-A0)*(x1-x0),tm=+$('tm').value;
+g.clearRect(0,0,840,560);g.fillStyle=th.b1;g.fillRect(0,0,840,560);g.font='11px system-ui,sans-serif';g.textBaseline='middle';
+for(let h=6;h<=21;h+=3){g.strokeStyle='rgba(255,255,255,.1)';g.beginPath();g.moveTo(X(h*60),30);g.lineTo(X(h*60),30+n*rh);g.stroke();g.fillStyle='rgba(255,255,255,.55)';g.textAlign='center';g.fillText(('0'+h).slice(-2)+':00',X(h*60),16)}
+OS.forEach((i,r)=>{const y=30+r*rh,s=RS[i];g.fillStyle='rgba(255,255,255,.82)';g.textAlign='left';g.fillText(K[i][1],8,y+rh/2);if(!s)return;
+const gr=g.createLinearGradient(X(s.rise),0,X(s.set),0);gr.addColorStop(0,'rgba('+th.long+',.92)');gr.addColorStop(.25,'rgba('+th.comet+',.88)');gr.addColorStop(.75,'rgba('+th.comet+',.88)');gr.addColorStop(1,'rgba('+th.long+',.92)');
+g.fillStyle=gr;g.beginPath();g.roundRect(X(s.rise),y+3,X(s.set)-X(s.rise),rh-6,6);g.fill();g.fillStyle=th.b1;g.textAlign='left';g.fillText(hm(s.rise),X(s.rise)+7,y+rh/2);g.textAlign='right';g.fillText(hm(s.set),X(s.set)-7,y+rh/2)});
+[750,900,1050,1200].forEach(m=>{g.fillStyle='rgba(255,255,255,.4)';g.fillRect(X(m)-1,22,2,6)});
+g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(X(tm),24);g.lineTo(X(tm),34+n*rh);g.stroke()}
+function paintSky(){const di=DI();if(!di)return;if(rsKey!==$('dt').value||RS.length!==K.length)calcRS(di);
+const tv=+$('tm').value,ms=di.ms+(tv-60*di.off)*6e4;$('tlab').textContent=hm(tv);
+const g=SK.getContext('2d'),im=g.createImageData(64,80);for(let j=0;j<80;j++)for(let i=0;i<64;i++){const c=skyC(sunEl(55.9-(j+.5)/80*6.1,(i+.5)/64*8-6,ms)),o=(j*64+i)*4;im.data[o]=c[0];im.data[o+1]=c[1];im.data[o+2]=c[2];im.data[o+3]=c[3]}g.putImageData(im,0,0);
+const up=K.filter(k=>sunEl(k[2],k[3],ms)>-.83).length,ss=RS.map((s,i)=>s?[s.set,i]:null).filter(Boolean).sort((a,b)=>a[0]-b[0]);drawBars();
+$('mstat').innerHTML=ss.length?kv(tr('In daylight'),up+' '+tr('of')+' '+K.length+' '+tr('stadiums'))+kv(tr('Under floodlights'),(K.length-up)+' '+tr('stadiums'))+kv(tr('Earliest sunset'),K[ss[0][1]][1]+', '+hm(ss[0][0]))+kv(tr('Latest sunset'),K[ss[ss.length-1][1]][1]+', '+hm(ss[ss.length-1][0]))+kv(tr('Sunset gap, north to south'),(ss[ss.length-1][0]-ss[0][0])+' min'):''}
+const fd=md=>{const mo=+md.slice(0,2)-1;return[mo>=6?2026:2027,mo,+md.slice(2)]},fmin=t=>+t.slice(0,2)*60+ +t.slice(2);
+function koMs(f){if(!f[3])return null;const d=fd(f[3]);return Date.UTC(d[0],d[1],d[2])+(fmin(f[4])-60*ukOff(d[0],d[1],d[2]))*6e4}
+const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtD(f){const d=fd(f[3]);return DN[new Date(Date.UTC(d[0],d[1],d[2])).getUTCDay()]+' '+d[2]+' '+MN[d[1]]}
+function renderList(){list.innerHTML='';[...arcs.keys()].sort((p,q)=>arcs[q].km-arcs[p].km).forEach(i=>{const a=arcs[i],f=a.f,d=document.createElement('div');d.className='row';let tag='';const ms=koMs(f);
+if(ms!=null){const el=sunEl(K[a.hi][2],K[a.hi][3],ms);tag=fmtD(f)+', '+f[4].slice(0,2)+':'+f[4].slice(2)+', '+(el<-.83?tr('floodlights'):tr('sun')+' '+Math.round(el)+'\u00b0')}
+tag+=(tag?', ':'')+ttl(a.ai,a.hi);if(f[5]){const q=f[5].split('-');tag+='<br><b>'+K[a.hi][0]+' '+q[0]+'\u2013'+q[1]+' '+K[a.ai][0]+'</b>'}
+d.innerHTML='<span>'+K[a.ai][1]+' '+tr('at')+' '+K[a.hi][1]+'<br><small style="color:var(--mut)">'+tag+'</small></span><b>'+Math.round(a.km)+' km</b><span class="bar"><i></i></span>';d.onclick=()=>pick(a.ai);a.row=d;list.appendChild(d);a.bar=d.querySelector('i')})}
+function gwStats(){const t=arcs.reduce((a,r)=>a+r.km,0),sh=arcs.reduce((m,r)=>r.km<m.km?r:m,arcs[0]);let nb=0,sb=0;arcs.forEach(r=>K[r.hi][2]>K[r.ai][2]?nb++:sb++);
+const brg=(a,b)=>{const p1=K[a][2]*rad,p2=K[b][2]*rad,dl=(K[b][3]-K[a][3])*rad;return(Math.atan2(Math.sin(dl)*Math.cos(p2),Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl))/rad+360)%360},dirs=['north','north-east','east','south-east','south','south-west','west','north-west'],lo=GWC[0]/W*8-6,la=55.9-GWC[1]/H*6.1;
+$('st').innerHTML=kv(tr('Total away travel'),Math.round(t).toLocaleString('en-US')+' '+KU())+kv(tr('Average journey'),km(t/arcs.length))+kv(tr('Longest'),K[LONG.ai][0]+' '+tr('at')+' '+K[LONG.hi][0]+', '+km(LONG.km)+', '+tr('heading')+' '+tr(dirs[Math.round(brg(LONG.ai,LONG.hi)/45)%8]))+kv(tr('Shortest'),K[sh.ai][0]+' '+tr('at')+' '+K[sh.hi][0]+', '+km(sh.km))+kv(tr('Longest by road time'),(()=>{const m=arcs.reduce((x_,r)=>TTM[r.ai][r.hi]>TTM[x_.ai][x_.hi]?r:x_,arcs[0]);return K[m.ai][0]+' '+tr('at')+' '+K[m.hi][0]+', '+ttl(m.ai,m.hi)})())+kv(tr('Fans heading north or south'),nb+' '+tr('northbound')+', '+sb+' '+tr('southbound'))+kv(tr('Centre of travel'),la.toFixed(2)+'\u00b0N '+Math.abs(lo).toFixed(2)+'\u00b0'+(lo<0?'W':'E'))}
+function setGW(g){if(reelI>=0)reelStop(false);arcs=mk(FXA.filter(f=>f[2]===g));if(!arcs.length)return;LONG=arcs.reduce((m,r)=>r.km>m.km?r:m,arcs[0]);ARC={};arcs.forEach((r,i)=>{ARC[r.ai]=r;ARC[r.hi]=r});
+{const tw=arcs.reduce((a,r)=>a+r.km,0)||1;GWC=arcs.reduce((c,r)=>[c[0]+(r.a[0]+r.b[0])/2*r.km/tw,c[1]+(r.a[1]+r.b[1])/2*r.km/tw],[0,0])}
+{const cn={};arcs.forEach(r=>{if(r.f[3])cn[r.f[3]]=(cn[r.f[3]]||0)+1});const k=Object.keys(cn).sort((a,b)=>cn[b]-cn[a]||Date.UTC(...fd(a))-Date.UTC(...fd(b)))[0];if(k){const d=fd(k);$('dt').value=d[0]+'-'+('0'+(d[1]+1)).slice(-2)+'-'+('0'+d[2]).slice(-2)}else $('dt').value=new Date(Date.UTC(2026,7,22+7*(g-1))).toISOString().slice(0,10)}T0=performance.now();ta=0;renderList();gwStats();$('hl').innerHTML='<h4>'+tr('Gameweek headlines')+'</h4>'+headlines().map(t=>'<p>'+t+'</p>').join('');paintSky();card()}
+const GWS=[...new Set(FXA.map(f=>f[2]))].sort((a,b)=>a-b);let curGW=(()=>{const td=Date.now();for(const g of GWS){const ms=FXA.filter(f=>f[2]===g&&f[3]).map(koMs);if(ms.length&&Math.max(...ms)>=td-864e5)return g}return GWS[GWS.length-1]})();
+$('gw').innerHTML=GWS.map(g=>{const f=FXA.filter(x=>x[2]===g&&x[3]).sort((a,b)=>koMs(a)-koMs(b))[0];return'<option value="'+g+'">Gameweek '+g+(f?', '+fmtD(f).slice(4):'')+'</option>'}).join('');$('gw').value=curGW;
+$('gw').onchange=()=>{curGW=+$('gw').value;setGW(curGW)};
+$('tm').oninput=paintSky;$('dt').onchange=()=>{renderList();paintSky()};
+// ---------- GIS lab ----------
+const lcs=$('lcs');lcs.innerHTML=K.map((k,i)=>[k[1],i]).sort().map(p=>'<option value="'+p[1]+'">'+p[0]+'</option>').join('');lcs.value=idx['NEW']!=null?idx['NEW']:0;
+const S0=Date.UTC(2026,7,15),ND=(Date.UTC(2027,4,31)-S0)/864e5;let lcCache={};
+function dayRS(i,dms){const d=new Date(dms),off=ukOff(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());let up=null,dn=null;for(let m=0;m<1440;m+=10){if(sunEl(K[i][2],K[i][3],dms+m*6e4)>-.833){if(up==null)up=m;dn=m}}return up==null?[720,720]:[up+60*off,dn+60*off]}
+function drawLC(){const i=+lcs.value,g=$('lc').getContext('2d'),x0=56,x1=826,y0=26,y1=300,X=n=>x0+n/ND*(x1-x0),Y=m=>y0+(m-360)/960*(y1-y0);
+if(!lcCache[i]){const a=[];for(let n=0;n<=ND;n+=2)a.push([n].concat(dayRS(i,S0+n*864e5)));lcCache[i]=a}
+const a=lcCache[i];g.clearRect(0,0,840,340);g.fillStyle=th.b1;g.fillRect(0,0,840,340);g.font='11px system-ui,sans-serif';g.textBaseline='middle';
+for(let h=6;h<=22;h+=4){g.strokeStyle='rgba(255,255,255,.1)';g.beginPath();g.moveTo(x0,Y(h*60));g.lineTo(x1,Y(h*60));g.stroke();g.fillStyle='rgba(255,255,255,.6)';g.textAlign='right';g.fillText(('0'+h).slice(-2)+':00',x0-8,Y(h*60))}
+[[2026,8],[2026,9],[2026,10],[2026,11],[2027,0],[2027,1],[2027,2],[2027,3],[2027,4]].forEach(q=>{const n=(Date.UTC(q[0],q[1],1)-S0)/864e5;g.strokeStyle='rgba(255,255,255,.08)';g.beginPath();g.moveTo(X(n),y0);g.lineTo(X(n),y1);g.stroke();g.fillStyle='rgba(255,255,255,.6)';g.textAlign='left';g.fillText(MN[q[1]],X(n)+3,y1+12)});
+g.beginPath();a.forEach((p,k)=>k?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));for(let k=a.length-1;k>=0;k--)g.lineTo(X(a[k][0]),Y(a[k][2]));g.closePath();g.fillStyle='rgba('+th.comet+',.2)';g.fill();
+[1,2].forEach(c=>{g.beginPath();a.forEach((p,k)=>k?g.lineTo(X(p[0]),Y(p[c])):g.moveTo(X(p[0]),Y(p[c])));g.strokeStyle='rgba('+th.comet+',.9)';g.lineWidth=2;g.stroke()});
+[[Date.UTC(2026,9,25),'Clocks go back'],[Date.UTC(2027,2,28),'Clocks go forward']].forEach(q=>{const n=(q[0]-S0)/864e5;g.save();g.setLineDash([4,4]);g.strokeStyle='rgba(255,255,255,.35)';g.beginPath();g.moveTo(X(n),y0-6);g.lineTo(X(n),y1);g.stroke();g.restore();g.fillStyle='rgba(255,255,255,.7)';g.textAlign='center';g.fillText(q[1],X(n),y0-14)});
+let fl=0,nm=0;FXA.filter(f=>f[1]===K[i][0]&&f[3]).forEach(f=>{const ms=koMs(f),d=fd(f[3]),n=(Date.UTC(d[0],d[1],d[2])-S0)/864e5,el=sunEl(K[i][2],K[i][3],ms);nm++;if(el<-.83)fl++;g.fillStyle=el<-.83?'rgb('+th.long+')':el<8?'#ffb347':'#ffffff';g.strokeStyle=th.b1;g.lineWidth=1.5;g.beginPath();g.arc(X(n),Y(fmin(f[4])),5.5,0,7);g.fill();g.stroke()});
+[['#ffffff','Daylight at kick-off'],['#ffb347','Low sun'],['rgb('+th.long+')','Floodlights']].forEach((q,k)=>{g.fillStyle=q[0];g.beginPath();g.arc(x0+k*150,328,5,0,7);g.fill();g.fillStyle='rgba(255,255,255,.8)';g.textAlign='left';g.fillText(q[1],x0+k*150+10,328)});
+const ss=a.map(p=>p[2]),mn=Math.min(...ss),mxs=Math.max(...ss),dstr=n=>{const d=new Date(S0+n*864e5);return d.getUTCDate()+' '+MN[d.getUTCMonth()]};
+$('lcstat').innerHTML=kv(tr('Home games'),nm)+kv(tr('Under floodlights'),fl+' '+tr('of')+' '+nm)+kv(tr('Earliest sunset'),hm(mn)+', '+dstr(a[ss.indexOf(mn)][0]))+kv(tr('Latest sunset'),hm(mxs)+', '+dstr(a[ss.indexOf(mxs)][0]))}
+lcs.onchange=drawLC;
+const AW=K.map(()=>GWS.map(()=>0));FXA.forEach(f=>{const a=idx[f[0]],h=idx[f[1]],k=GWS.indexOf(f[2]);if(k>=0&&a!=null&&h!=null)AW[a][k]+=D[a][h]});
+const CUM=GWS.map((_,k)=>K.map((_,i)=>AW[i].slice(0,k+1).reduce((p,q)=>p+q,0)));
+function buildMst(){const fin=CUM[CUM.length-1],o=K.map((_,i)=>i).sort((a,b)=>fin[b]-fin[a]),st=K.map((_,i)=>{let b=0,bk=0;for(let k=0;k+2<GWS.length;k++){const q=AW[i][k]+AW[i][k+1]+AW[i][k+2];if(q>b){b=q;bk=k}}return[b,bk,i]}).sort((a,b)=>b[0]-a[0]),nf=v=>Math.round(v).toLocaleString('en-US')+' '+KU();
+$('mst').innerHTML=kv(tr('Most miles'),K[o[0]][1]+', '+nf(fin[o[0]]))+kv(tr('Fewest miles'),K[o[o.length-1]][1]+', '+nf(fin[o[o.length-1]]))+kv(tr('Season gap'),nf(fin[o[0]]-fin[o[o.length-1]]))+'<p class="note" style="margin-top:12px">'+tr('Hardest three-gameweek stretch')+'</p>'+st.slice(0,4).map(q=>kv(K[q[2]][1],nf(q[0])+', GW '+GWS[q[1]]+' '+tr('to')+' '+GWS[q[1]+2])).join('')}buildMst();
+let mgv=Math.max(1,GWS.indexOf(curGW)),mpl=false,mlast=0;const MY=K.map((_,i)=>i*24);$('mg').max=GWS.length;$('mg').value=mgv;$('mgl').textContent='GW '+GWS[mgv-1];
+function drawMiles(){const g=$('mc').getContext('2d'),n=K.length,rh=Math.min(26,500/n),vals=CUM[mgv-1],mx=Math.max(...CUM[CUM.length-1])||1,ord=K.map((_,i)=>i).sort((a,b)=>vals[b]-vals[a]);
+g.clearRect(0,0,840,560);g.fillStyle=th.b1;g.fillRect(0,0,840,560);g.font='600 13px system-ui,sans-serif';g.textBaseline='middle';g.fillStyle='rgba(255,255,255,.75)';g.textAlign='left';g.fillText('Away miles after gameweek '+GWS[mgv-1],10,16);
+ord.forEach((i,r)=>{const ty=34+r*rh;MY[i]+=(ty-MY[i])*.2;if(Math.abs(ty-MY[i])<.5)MY[i]=ty;const w=vals[i]/mx*540,c=col[i];g.fillStyle='rgba('+c+',.92)';g.beginPath();g.roundRect(150,MY[i]+2,Math.max(2,w),rh-4,5);g.fill();g.fillStyle='#fff';g.textAlign='right';g.fillText(K[i][1],142,MY[i]+rh/2);g.textAlign='left';g.fillText(Math.round(vals[i]).toLocaleString('en-US')+' '+KU(),156+w,MY[i]+rh/2)})}
+$('mg').oninput=()=>{mgv=+$('mg').value;$('mgl').textContent='GW '+GWS[mgv-1]};
+$('mpb').onclick=()=>{mpl=!mpl;$('mpb').textContent=mpl?'Pause':'Play';if(mpl&&mgv>=GWS.length){mgv=1;$('mg').value=1}};
+function mloop(now){if(!$('p-miles').hidden){if(mpl&&now-mlast>650){mlast=now;if(mgv>=GWS.length){mpl=false;$('mpb').textContent='Play'}else{mgv++;$('mg').value=mgv;$('mgl').textContent='GW '+GWS[mgv-1]}}drawMiles()}requestAnimationFrame(mloop)}
+const PR=[];for(let i=0;i<K.length;i++)for(let j=i+1;j<K.length;j++)PR.push([D[i][j],i,j]);PR.sort((a,b)=>a[0]-b[0]);
+function buildDerby(){$('dg').innerHTML='';PR.slice(0,12).forEach(p=>{const d=document.createElement('div'),A=K[p[1]][0],B=K[p[2]][0];d.className='dcard';
+const fx=FXA.filter(f=>(f[0]===A&&f[1]===B)||(f[0]===B&&f[1]===A)).sort((a,b)=>koMs(a)-koMs(b));
+d.innerHTML='<div class="dk">'+p[0].toFixed(1)+' km</div><b>'+K[p[1]][1]+' '+tr('and')+' '+K[p[2]][1]+'</b>'+fx.map(f=>{const h=idx[f[1]],ms=koMs(f),el=ms==null?null:sunEl(K[h][2],K[h][3],ms);return'<small>'+(f[3]?fmtD(f)+', '+f[4].slice(0,2)+':'+f[4].slice(2)+' '+tr('at')+' '+K[h][1]+(el!=null&&el<-.83?', '+tr('floodlights'):''):'')+'</small>'}).join('');
+d.onclick=()=>{pick(p[1]);document.querySelector('.map').scrollIntoView({behavior:'smooth',block:'center'})};$('dg').appendChild(d)})}buildDerby();
+const RES=FXA.filter(f=>f[5]&&idx[f[0]]!=null&&idx[f[1]]!=null).map(f=>{const q=f[5].split('-').map(Number);return{km:D[idx[f[0]]][idx[f[1]]],gd:q[1]-q[0],pts:q[1]>q[0]?3:q[1]===q[0]?1:0,gw:f[2]}});
+function drawDist(){const g=$('dc').getContext('2d');g.clearRect(0,0,840,460);g.fillStyle=th.b1;g.fillRect(0,0,840,460);if(RES.length<3){$('dst').innerHTML='<p class="note">'+tr('Not enough completed matches yet.')+'</p>';return}
+const x0=60,x1=820,y0=34,y1=420,mx=Math.ceil(Math.max(...RES.map(r=>r.km))/100)*100,gmin=Math.min(...RES.map(r=>r.gd))-1,gmax=Math.max(...RES.map(r=>r.gd))+1,X=v=>x0+v/mx*(x1-x0),Y=v=>y1-(v-gmin)/(gmax-gmin)*(y1-y0);
+g.font='11px system-ui,sans-serif';g.textBaseline='middle';
+for(let v=0;v<=mx;v+=100){g.strokeStyle='rgba(255,255,255,.08)';g.beginPath();g.moveTo(X(v),y0);g.lineTo(X(v),y1);g.stroke();g.fillStyle='rgba(255,255,255,.6)';g.textAlign='center';g.fillText(v+' '+KU(),X(v),y1+16)}
+for(let v=Math.ceil(gmin);v<=gmax;v++){g.strokeStyle=v===0?'rgba(255,255,255,.4)':'rgba(255,255,255,.08)';g.beginPath();g.moveTo(x0,Y(v));g.lineTo(x1,Y(v));g.stroke();g.fillStyle='rgba(255,255,255,.6)';g.textAlign='right';g.fillText((v>0?'+':'')+v,x0-8,Y(v))}
+RES.forEach((r,k)=>{const jy=((k*37)%11-5)/24;g.fillStyle='rgba('+(r.pts===3?th.comet:r.pts===1?th.ring:th.long)+',.88)';g.beginPath();g.arc(X(r.km),Y(r.gd+jy),5,0,7);g.fill()});
+const n=RES.length,mxm=RES.reduce((a,r)=>a+r.km,0)/n,mym=RES.reduce((a,r)=>a+r.gd,0)/n;let sxy=0,sxx=0,syy=0;RES.forEach(r=>{sxy+=(r.km-mxm)*(r.gd-mym);sxx+=(r.km-mxm)**2;syy+=(r.gd-mym)**2});
+const sl=sxy/sxx,ic=mym-sl*mxm,rr=sxy/Math.sqrt(sxx*syy);g.save();g.setLineDash([8,6]);g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(X(0),Y(ic));g.lineTo(X(mx),Y(ic+sl*mx));g.stroke();g.restore();
+[['rgb('+th.comet+')','Away win'],['rgb('+th.ring+')','Draw'],['rgb('+th.long+')','Away defeat']].forEach((q,k)=>{g.fillStyle=q[0];g.beginPath();g.arc(x0+k*130,16,5,0,7);g.fill();g.fillStyle='rgba(255,255,255,.8)';g.textAlign='left';g.fillText(q[1],x0+k*130+10,16)});
+g.fillStyle='rgba(255,255,255,.6)';g.textAlign='right';g.fillText('Away goal difference, against kilometres travelled',x1,16);
+const bin=(a,b)=>{const q=RES.filter(r=>r.km>=a&&r.km<b);return q.length?q.length+' '+tr('matches')+', '+(q.reduce((s,r)=>s+r.pts,0)/q.length).toFixed(2)+' '+tr('points each'):tr('no matches')};
+$('dst').innerHTML=(n<190?'<p class="note">'+tr('Early data, so treat it as a conversation starter, not a verdict.')+'</p>':'')+kv(tr('Matches analysed'),n+', '+tr('GW')+' 1 '+tr('to')+' '+Math.max(...RES.map(r=>r.gw)))+kv(tr('Correlation (r)'),rr.toFixed(2))+kv(tr('Per extra 100 km'),(sl*100>=0?'+':'')+(sl*100).toFixed(2)+' goals')+kv(tr('Under 150 km'),bin(0,150))+kv('150 to 300 km',bin(150,300))+kv(tr('Over 300 km'),bin(300,1e9))}
+function drawLab(){paintSky();drawLC();drawMiles();drawDist();drawOdy();drawDrift();drawPop();drawRT();drawCT()}
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(c=>c.setAttribute('aria-pressed',c===b));['sky','miles','derby','dist','ody','drift','pop','rt','ct'].forEach(tb=>$('p-'+tb).hidden=tb!==b.dataset.tab);drawLab()});
+
+const LEJOG=(()=>{const r=Math.PI/180,a=50.066,b=58.644,dl=(-3.07+5.715)*r,q=Math.sin((b-a)*r/2)**2+Math.cos(a*r)*Math.cos(b*r)*Math.sin(dl/2)**2;return 12742*Math.asin(Math.sqrt(q))})();
+function headlines(){const o=[],ar=LANG==='ar',t0=arcs.reduce((a,r)=>a+r.km,0),n=arcs.length,A=r=>K[r.ai][1],Hm=r=>K[r.hi][1];
+o.push(ar?A(LONG)+' تسافر '+Math.round(LONG.km)+' كم إلى '+Hm(LONG)+'، وهي أطول رحلة في الجولة.':A(LONG)+' travel '+Math.round(LONG.km)+' km to '+Hm(LONG)+', the longest away day of the gameweek.');
+let fl=0;const sd=[];arcs.forEach(r=>{const ms=koMs(r.f);if(ms==null)return;const a=sunEl(K[r.hi][2],K[r.hi][3],ms),b=sunEl(K[r.hi][2],K[r.hi][3],ms+105*6e4);if(a<-.83)fl++;else if(b<-.83)sd.push(r)});
+if(fl)o.push(ar?fl+' من '+n+' مباريات تنطلق بعد الغروب.':fl+' of '+n+' matches kick off after sunset.');
+if(sd.length)o.push(ar?'الشمس تغرب أثناء '+sd.length+' مباريات، منها '+Hm(sd[0])+' ضد '+A(sd[0])+'.':'The sun sets during '+sd.length+' match'+(sd.length>1?'es':'')+', including '+Hm(sd[0])+' v '+A(sd[0])+'.');
+const cl=arcs.reduce((m,r)=>r.km<m.km?r:m,arcs[0]);o.push(ar?'أقرب مواجهة: '+Hm(cl)+' ضد '+A(cl)+'، بينهما '+Math.round(cl.km)+' كم فقط.':'Closest pairing: '+Hm(cl)+' v '+A(cl)+', just '+Math.round(cl.km)+' km apart.');
+o.push(ar?'الجماهير تقطع '+Math.round(t0).toLocaleString('en-US')+' كم إجمالًا، أي نحو '+(t0/LEJOG).toFixed(1)+' مرة من ليندز إند إلى جون أوجروتس بخط مستقيم.':'Away fans cover '+Math.round(t0).toLocaleString('en-US')+' km in total, about '+(t0/LEJOG).toFixed(1)+' times Land\u2019s End to John o\u2019Groats in a straight line.');return o}
+function shareCard(){if(!DL||rec)return;L.J=true;pick(-1);T0=performance.now()-14e3;requestAnimationFrame(()=>requestAnimationFrame(()=>{
+const c=document.createElement('canvas');c.width=1080;c.height=1350;const g=c.getContext('2d'),gr=g.createLinearGradient(0,0,0,1350);gr.addColorStop(0,th.b0);gr.addColorStop(1,th.b1);g.fillStyle=gr;g.fillRect(0,0,1080,1350);
+const first=arcs.slice().sort((a,b)=>koMs(a.f)-koMs(b.f))[0];g.fillStyle='#fff';g.font='700 62px Georgia,serif';g.fillText('Premier League Atlas',48,100);g.font='500 30px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.78)';g.fillText('Gameweek '+curGW+(first.f[3]?', '+fmtD(first.f):''),48,150);
+g.drawImage(cv,0,0,cv.width,cv.height,40,190,660,835);
+const wrap=(t,x,y,w,lh)=>{let ln='';t.split(' ').forEach(wd=>{const q=ln+wd+' ';if(g.measureText(q).width>w&&ln){g.fillText(ln,x,y);y+=lh;ln=wd+' '}else ln=q});g.fillText(ln,x,y);return y+lh};
+let y=225;g.font='600 22px system-ui,sans-serif';g.fillStyle='rgb('+th.comet+')';g.fillText('GAMEWEEK HEADLINES',730,y);y+=40;g.font='500 25px system-ui,sans-serif';
+headlines().forEach(t=>{g.fillStyle='rgb('+th.long+')';g.fillRect(730,y-20,5,26);g.fillStyle='#fff';y=wrap(t,748,y,300,32)+20});
+g.fillStyle='rgba(255,255,255,.7)';g.font='500 22px system-ui,sans-serif';g.fillText('Spatial Football Analytics',48,1290);g.font='400 18px system-ui,sans-serif';g.fillText('Fixtures: Premier League 2026/27. Stadium coordinates are approximate.',48,1320);
+c.toBlob(b=>{if(b)DL.save({filename:'premier-league-atlas-gw'+curGW+'.png',data:b}).catch(()=>{})},'image/png')}))}
+$('bShare').onclick=shareCard;
+const ods=$('ods');ods.innerHTML=K.map((k,i)=>[k[1],i]).sort().map(p=>'<option value="'+p[1]+'">'+p[0]+'</option>').join('');ods.value=idx['NEW']!=null?idx['NEW']:0;
+let OT=[],opr=0,opl=true;
+function buildOdy(){const c=+ods.value;{const a=$('satLink');a.hidden=/claude/.test(location.hostname);a.href='odyssey-satellite.html?club='+K[c][0]}OT=mk(FXA.filter(f=>f[0]===K[c][0]&&f[3]).sort((a,b)=>koMs(a)-koMs(b)));opr=0;opl=true;$('og').value=0;if(!OT.length){$('ost').innerHTML='';return}
+const tot=OT.reduce((a,r)=>a+r.km,0),lg=OT.reduce((m,r)=>r.km>m.km?r:m,OT[0]);$('ost').innerHTML=kv(tr('Away trips'),OT.length)+kv(tr('Total distance'),Math.round(tot).toLocaleString('en-US')+' '+KU())+kv(tr('Longest trip'),K[lg.hi][1]+', '+Math.round(lg.km)+' '+KU())+kv(tr('Landu2019s End to John ou2019Groats'),(tot/LEJOG).toFixed(1)+' '+tr('times'))+'<p class="note">'+tr('One way, in a straight line, from the stadium to each away ground.')+'</p>'}
+function drawOdy(){const g=$('oc').getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,560,710);const gr=g.createRadialGradient(280,320,40,280,355,520);gr.addColorStop(0,th.b0);gr.addColorStop(1,th.b1);g.fillStyle=gr;g.fillRect(0,0,560,710);
+g.setTransform(.875,0,0,.875,0,0);g.fillStyle=th.land;g.fill(eng);g.strokeStyle=th.line;g.lineWidth=1.6;g.stroke(eng);
+const c=+ods.value,n=OT.length,cp=Math.floor(opr),fr=opr-cp;let run=0;
+OT.forEach((r,k)=>{if(k>cp)return;const e=k<cp?1:fr,N=40;for(let q=0;q<N;q++){const a=bz(r,q/N*e),b=bz(r,(q+1)/N*e);g.strokeStyle='rgba('+th.comet+','+(k<cp?.4:.3+.7*q/N)+')';g.lineWidth=k<cp?1.5:2.8;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke()}run+=r.km*e;if(k<cp){g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.arc(r.b[0],r.b[1],3,0,7);g.fill()}});
+if(cp<n){const h=bz(OT[cp],fr);g.save();g.shadowColor='rgb('+th.comet+')';g.shadowBlur=16;g.fillStyle='#fff';g.beginPath();g.arc(h[0],h[1],5,0,7);g.fill();g.restore()}
+S.forEach((p,i)=>{g.fillStyle=i===c?'#fff':'rgba(255,255,255,.45)';g.beginPath();g.arc(p[0],p[1],i===c?7:3,0,7);g.fill()});
+g.setTransform(1,0,0,1,0,0);g.textAlign='left';g.fillStyle='#fff';g.font='600 18px system-ui,sans-serif';g.fillText(K[c][1]+', away trips',20,34);
+const cu=OT[Math.min(cp,n-1)];if(cu){g.font='500 15px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.8)';g.fillText('GW '+cu.f[2]+' '+tr('at')+' '+K[cu.hi][1]+', '+fmtD(cu.f),20,58)}
+g.font='700 34px Georgia,serif';g.fillStyle='#fff';g.fillText(Math.round(run).toLocaleString('en-US')+' '+KU(),20,690)}
+ods.onchange=buildOdy;$('opb').onclick=()=>{opr=0;opl=true};$('og').oninput=()=>{opl=false;opr=$('og').value/100*OT.length};
+function oloop(){if(!$('p-ody').hidden){if(opl&&OT.length){opr=Math.min(OT.length,opr+.02);if(opr>=OT.length)opl=false;$('og').value=Math.round(opr/OT.length*100)}drawOdy()}requestAnimationFrame(oloop)}
+buildOdy();requestAnimationFrame(oloop);
+requestAnimationFrame(mloop);
+
+// ===== language, story, my club, drift =====
+const NAMAR={ARS:'آرسنال',AVL:'أستون فيلا',BOU:'بورنموث',BRE:'برينتفورد',BHA:'برايتون',CHE:'تشيلسي',COV:'كوفنتري سيتي',CRY:'كريستال بالاس',EVE:'إيفرتون',FUL:'فولهام',HUL:'هال سيتي',IPS:'إبسويتش تاون',LEE:'ليدز يونايتد',LIV:'ليفربول',MCI:'مانشستر سيتي',MUN:'مانشستر يونايتد',NEW:'نيوكاسل يونايتد',NFO:'نوتنغهام فورست',SUN:'سندرلاند',TOT:'توتنهام هوتسبير'};
+const NAMEN=Object.fromEntries(K.map(k=>[k[0],k[1]])),DNEN=DN.slice(),MNEN=MN.slice(),DNAR=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],MNAR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+function trDom(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement&&!/^(SCRIPT|STYLE)$/.test(n.parentElement.tagName)&&n.nodeValue.trim()?1:2}),a=[];while(w.nextNode())a.push(w.currentNode);
+a.forEach(n=>{if(n._en==null)n._en=n.nodeValue;const k=n._en.trim().replace(/\s+/g,' '),v=LANG==='ar'?AR[k]:null;n.nodeValue=v?n._en.match(/^\s*/)[0]+v+n._en.match(/\s*$/)[0]:n._en})}
+function refreshSelects(){const cs=K.map((k,i)=>[k[1],i]).sort((a,b)=>a[0].localeCompare(b[0],LANG)).map(p=>'<option value="'+p[1]+'">'+p[0]+'</option>').join(''),v1=selEl.value,v2=lcs.value,v3=ods.value,v4=$('gw').value;
+selEl.innerHTML='<option value="-1">'+tr('League view')+'</option>'+cs;lcs.innerHTML=cs;ods.innerHTML=cs;
+$('gw').innerHTML=GWS.map(g=>{const f=FXA.filter(x=>x[2]===g&&x[3]).sort((a,b)=>koMs(a)-koMs(b))[0];return'<option value="'+g+'">'+tr('Gameweek')+' '+g+(f?', '+fmtD(f).slice(fmtD(f).indexOf(' ')+1):'')+'</option>'}).join('');
+selEl.value=v1;lcs.value=v2;ods.value=v3;$('gw').value=v4}
+function setDn(){const e=$('dn');if(!e||!SAVED)return;if(!SAVED._srv){e.textContent=tt('Showing the file you loaded.','يعرض الملف الذي حمّلته.');return}if(SAVED.source)e.textContent=tt('Fixtures, kick-off times and results: '+SAVED.source+(SAVED.generated?', updated '+SAVED.generated:'')+'. Stadium coordinates are approximate.','الجدول والمواعيد والنتائج: '+SAVED.source+(SAVED.generated?'، آخر تحديث '+SAVED.generated:'')+'. إحداثيات الملاعب تقريبية.')}
+function rerender(){setDn();refreshSelects();card();renderList();gwStats();$('hl').innerHTML='<h4>'+tr('Gameweek headlines')+'</h4>'+headlines().map(x=>'<p>'+x+'</p>').join('');buildDerby();buildMst();buildOdy();buildDrift();renderMy();paintSky();drawLab()}
+function applyLang(){const ar=LANG==='ar';document.documentElement.lang=LANG;document.documentElement.dir=ar?'rtl':'ltr';
+K.forEach(k=>{k[1]=ar&&NAMAR[k[0]]?NAMAR[k[0]]:NAMEN[k[0]]||k[1]});DN.splice(0,7,...(ar?DNAR:DNEN));MN.splice(0,12,...(ar?MNAR:MNEN));
+document.querySelectorAll('[data-ar]').forEach(e=>{if(e.dataset.en==null)e.dataset.en=e.textContent;e.textContent=ar?e.dataset.ar:e.dataset.en});
+trDom();$('lang').textContent=ar?'English':'العربية';try{localStorage.setItem('lang',LANG)}catch(e){}document.title=ar?'أطلس الدوري الإنجليزي':'Premier League Atlas';
+[...TE.children].forEach((c,j)=>c.textContent=tr(TH[j].n));$('mpb').textContent=tr(mpl?'Pause':'Play');rerender()}
+$('lang').onclick=()=>{stStop();if(reelI>=0)reelStop();LANG=LANG==='ar'?'en':'ar';applyLang()};
+function setChips(){document.querySelectorAll('[data-l]').forEach(b=>b.setAttribute('aria-pressed',!!L[b.dataset.l]))}
+function focusOn(a,b){const mx=(S[a][0]+S[b][0])/2,my=(S[a][1]+S[b][1])/2,d=Math.hypot(S[a][0]-S[b][0],S[a][1]-S[b][1]);tgt.k=Math.max(1,Math.min(3.4,330/(d+40)));tgt.tx=W/2-mx*tgt.k;tgt.ty=H/2-my*tgt.k;clampT()}
+let stT=null;
+function stSteps(){const t0=arcs.reduce((a,r)=>a+r.km,0),cl=arcs.reduce((m,r)=>r.km<m.km?r:m,arcs[0]),mins=arcs.map(r=>fmin(r.f[4])).sort((a,b)=>a-b),med=mins[mins.length>>1]||900;let sd=0;
+arcs.forEach(r=>{const ms=koMs(r.f);if(ms==null)return;const a=sunEl(K[r.hi][2],K[r.hi][3],ms),b=sunEl(K[r.hi][2],K[r.hi][3],ms+105*6e4);if(a>-.83&&b<-.83)sd++});
+return[
+{h:tt('20 clubs, one island','٢٠ ناديًا، جزيرة واحدة'),p:tt('Every colour is a territory: the part of England that is closer to that stadium than to any other.','كل لون منطقة نفوذ: الجزء من إنجلترا الأقرب لهذا الملعب من أي ملعب آخر.'),a:()=>{pick(-1);L.T=true;L.J=false;L.D=false;L.N=false}},
+{h:tt('Gameweek '+curGW,'الجولة '+curGW),p:tt('Away fans cross England: '+Math.round(t0).toLocaleString('en-US')+' km in total across '+arcs.length+' matches.','الجماهير تعبر إنجلترا: '+Math.round(t0).toLocaleString('en-US')+' كم إجمالًا في '+arcs.length+' مباريات.'),a:()=>{L.T=true;L.J=true;L.D=false;L.N=false;T0=performance.now();ta=0}},
+{h:tt('The longest away day','أطول رحلة'),p:K[LONG.ai][1]+tt(' travel to ',' تسافر إلى ')+K[LONG.hi][1]+', '+Math.round(LONG.km)+' '+KU(),a:()=>{L.J=true;pick(-1);focusOn(LONG.ai,LONG.hi)}},
+{h:tt('Where the sun sets','أين تغرب الشمس'),p:tt('At '+hm(med)+' the sun sets during '+sd+' of '+arcs.length+' matches.','عند '+hm(med)+' تغرب الشمس أثناء '+sd+' من '+arcs.length+' مباريات.'),a:()=>{pick(-1);L.N=true;$('tm').value=Math.min(1260,Math.max(360,med+15));paintSky()}},
+{h:tt('The derby of the week','ديربي الأسبوع'),p:K[cl.hi][1]+tt(' v ',' ضد ')+K[cl.ai][1]+', '+Math.round(cl.km)+' '+KU()+tt(' apart',' فقط بينهما'),a:()=>{L.N=false;L.D=true;pick(-1);focusOn(cl.ai,cl.hi)}},
+{h:tt('Now make it yours','والآن اجعلها لك'),p:tt('Choose your club to see your own season, or save this gameweek as a card.','اختر ناديك لترى موسمك، أو احفظ هذه الجولة كبطاقة.'),a:()=>{L.D=false;L.N=false;pick(-1)}}]}
+function stGo(i){const St=stSteps();if(i>=St.length){stStop();return}const s0=St[i];s0.a();setChips();const c=$('cap');c.classList.add('on');
+c.innerHTML='<div class="ch">'+s0.h+'</div><div class="cp">'+s0.p+'</div><div class="cf"><div class="dots">'+St.map((_,k)=>'<i'+(k===i?' class="on"':'')+'></i>').join('')+'</div><button id="cNext" class="ghost sm">'+(i===St.length-1?tt('Finish','إنهاء'):tt('Next','التالي'))+'</button><button id="cX" class="ghost sm">'+tt('Close','إغلاق')+'</button></div>';
+$('cNext').onclick=()=>stGo(i+1);$('cX').onclick=stStop;clearTimeout(stT);if(i<St.length-1)stT=setTimeout(()=>stGo(i+1),6500)}
+function stStop(){clearTimeout(stT);$('cap').classList.remove('on');setChips()}
+function stStart(){if(reelI>=0)reelStop(false);stGo(0);document.querySelector('.map').scrollIntoView({behavior:'smooth',block:'center'})}
+$('hStory').onclick=stStart;
+let MYC=-1;try{const c=localStorage.getItem('myclub');if(c&&idx[c]!=null)MYC=idx[c]}catch(e){}
+
+function drawNM(s){if(!NM)return;const now=performance.now(),e0=Math.min(1,(now-NM.t0)/3200),e=1-Math.pow(1-e0,3),r=NM.r,cc=NM.away?th.long:th.comet,n=60;x.lineCap='round';
+x.save();x.setLineDash([2*s,7*s]);x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=1.4*s;x.beginPath();for(let q=0;q<=n;q++){const b=bz(r,q/n);q?x.lineTo(b[0],b[1]):x.moveTo(b[0],b[1])}x.stroke();x.restore();
+for(let q=0;q<n;q++){const u0=q/n*e,u1=(q+1)/n*e,a=bz(r,u0),b=bz(r,u1),al=.25+.75*Math.max(0,1-(e-u1)/.4);x.strokeStyle='rgba('+cc+','+al.toFixed(3)+')';x.lineWidth=(1.5+3.5*al)*s;x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke()}
+const h=bz(r,e);x.save();x.shadowColor='rgb('+cc+')';x.shadowBlur=24;x.fillStyle='#fff';x.beginPath();x.arc(h[0],h[1],6.5*s,0,7);x.fill();x.restore();
+const pr=(now/900)%1;x.strokeStyle='rgba(255,255,255,'+((1-pr)*.85).toFixed(3)+')';x.lineWidth=2*s;x.beginPath();x.arc(r.b[0],r.b[1],(9+pr*28)*s,0,7);x.stroke();
+x.fillStyle='#fff';x.beginPath();x.arc(r.b[0],r.b[1],5*s,0,7);x.fill();
+}
+function drawNMtop(s){if(!NM)return;const r=NM.r,e0=Math.min(1,(performance.now()-NM.t0)/3200);
+lab(K[NM.ai][0],r.a[0]+9*s,r.a[1]-9*s,11*s,'#fff');lab(K[NM.hi][1],r.b[0]+11*s,r.b[1]-11*s,12*s,'#fff');
+if(e0>=1){const m=bz(r,.5),txt=km(r.km),w=(txt.length*9+30)*s;x.fillStyle='#fff';x.beginPath();x.roundRect(m[0]-w/2,m[1]-34*s,w,26*s,13*s);x.fill();x.fillStyle=th.b1;x.font='700 '+14*s+'px system-ui,sans-serif';x.textAlign='center';x.fillText(txt,m[0],m[1]-16*s);x.textAlign='start'}}
+function showNext(c){const nm=nextMatch(c);if(!nm)return;if(reelI>=0){clearTimeout(reelT);reelI=-1;$('bReel').setAttribute('aria-pressed',false);arcs.forEach(x=>x.row&&x.row.classList.remove('on'))}const f=nm[1],Ai=idx[f[0]],Hi=idx[f[1]],r=mk([f])[0],home=Hi===c,e1=sunEl(K[Hi][2],K[Hi][3],nm[0]);
+const pj=NM?NM.prevJ:L.J;pick(-1);focusOn(Ai,Hi);L.J=false;setChips();NM={r,f,ai:Ai,hi:Hi,away:!home,t0:performance.now(),prevJ:pj};
+const cp=$('cap');cp.classList.add('on');cp.innerHTML='<div class="ch">'+K[Ai][1]+' '+tr('at')+' '+K[Hi][1]+'</div><div class="cp">'+fmtD(f)+', '+f[4].slice(0,2)+':'+f[4].slice(2)+'. '+(home?tr('Visitors travel'):tr('You travel'))+' '+km(r.km)+', '+ttl(r.ai,r.hi)+'. '+(e1<-.83?tr('floodlights'):tr('sun')+' '+Math.round(e1)+'\u00b0')+'</div><div class="cf"><div class="dots"></div><button id="cX" class="ghost sm">'+tt('Close','إغلاق')+'</button></div>';
+$('cX').onclick=()=>{if(NM){L.J=NM.prevJ;NM=null}setChips();stStop()};document.querySelector('.map').scrollIntoView({behavior:'smooth',block:'center'})}
+
+let reelT=null,reelI=-1,reelOrd=[],reelBusy=false;
+function reelStart(){stStop();reelOrd=arcs.slice().sort((a,b)=>(koMs(a.f)||0)-(koMs(b.f)||0));reelGo(0)}
+function reelStop(restore){clearTimeout(reelT);reelT=null;reelI=-1;arcs.forEach(x=>x.row&&x.row.classList.remove('on'));$('bReel').setAttribute('aria-pressed',false);$('cap').classList.remove('on');
+if(NM){L.J=NM.prevJ;NM=null;setChips()}if(restore!==false){pick(-1);T0=performance.now();ta=0}}
+function reelGo(i){clearTimeout(reelT);if(i<0)i=0;if(i>=reelOrd.length){reelStop();return}
+const r=reelOrd[i],f=r.f,pj=(NM&&NM.prevJ!=null)?NM.prevJ:L.J,e1=sunEl(K[r.hi][2],K[r.hi][3],koMs(f)),sc=f[5]?f[5].split('-'):null;
+reelBusy=true;pick(-1);focusOn(r.ai,r.hi);reelBusy=false;if(tgt.k>2.3){tgt.k=2.3;const mx=(S[r.ai][0]+S[r.hi][0])/2,my=(S[r.ai][1]+S[r.hi][1])/2;tgt.tx=W/2-mx*tgt.k;tgt.ty=H/2-my*tgt.k;clampT()}L.J=false;setChips();NM={r,f,ai:r.ai,hi:r.hi,away:false,t0:performance.now(),prevJ:pj};reelI=i;$('bReel').setAttribute('aria-pressed',true);
+arcs.forEach(x=>x.row&&x.row.classList.toggle('on',x===r));if(r.row&&r.row.scrollIntoView)r.row.scrollIntoView({block:'nearest',behavior:'smooth'});
+const cp=$('cap');cp.classList.add('on');
+cp.innerHTML='<div class="ch">'+tt('Match ','المباراة ')+(i+1)+'/'+reelOrd.length+': '+K[r.ai][1]+' '+tr('at')+' '+K[r.hi][1]+'</div><div class="cp">'+fmtD(f)+', '+f[4].slice(0,2)+':'+f[4].slice(2)+'. '+km(r.km)+', '+ttl(r.ai,r.hi)+'. '+(e1<-.83?tr('floodlights'):tr('sun')+' '+Math.round(e1)+'\u00b0')+'<span id="rlScore"></span></div><div class="cf"><div class="dots">'+reelOrd.map((_,k)=>'<i'+(k===i?' class="on"':'')+'></i>').join('')+'</div><button id="rPrev" class="ghost sm">'+tt('Back','السابق')+'</button><button id="rNext" class="ghost sm">'+tt('Next','التالي')+'</button><button id="rX" class="ghost sm">'+tt('Close','إغلاق')+'</button></div>';
+$('rPrev').onclick=()=>reelGo(i-1);$('rNext').onclick=()=>reelGo(i+1);$('rX').onclick=()=>reelStop();
+if(sc)setTimeout(()=>{const e=$('rlScore');if(reelI===i&&e)e.innerHTML=' <b>'+K[r.hi][0]+' '+sc[0]+'\u2013'+sc[1]+' '+K[r.ai][0]+'</b>'},3300);
+reelT=setTimeout(()=>reelGo(i+1),7800)}
+$('bReel').onclick=()=>{if(reelI>=0)reelStop();else reelStart()};
+function nextMatch(c){const code=K[c][0],now=Date.now();return FXA.filter(f=>(f[0]===code||f[1]===code)&&f[3]).map(f=>[koMs(f),f]).filter(x=>x[0]>=now-3*36e5).sort((a,b)=>a[0]-b[0])[0]}
+function renderMy(){const el=$('my');if(MYC<0){el.innerHTML='<button id="myPick" class="cta sm">'+tt('Choose my club','اختر ناديي')+'</button>';$('myPick').onclick=openClubs;return}
+const c=MYC,nm=nextMatch(c);let h='<div class="mycard" style="border-color:rgb('+col[c]+')"><div class="myh"><span>'+K[c][1]+'</span><button id="myChg" class="ghost sm">'+tt('Change','تغيير')+'</button></div>';
+if(nm){const f=nm[1],Hi=idx[f[1]],Ai=idx[f[0]],home=Hi===c,opp=home?Ai:Hi,e0=sunEl(K[Hi][2],K[Hi][3],nm[0]),d=fd(f[3]),rs=dayRS(Hi,Date.UTC(d[0],d[1],d[2]));
+h+=kv(tr('Next match'),(home?tr('v'):tr('at'))+' '+K[opp][1]+', '+fmtD(f)+', '+f[4].slice(0,2)+':'+f[4].slice(2))+kv(home?tr('Visitors travel'):tr('You travel'),km(D[Ai][Hi]))+kv(tr('Light at kick-off'),e0<-.83?tr('floodlights'):tr('sun')+' '+Math.round(e0)+'\u00b0')+kv(tr('Sunset that day'),hm(rs[1]))}
+const left=FXA.filter(f=>f[0]===K[c][0]&&f[3]&&koMs(f)>=Date.now()-3*36e5);
+h+=kv(tr('Away trips left'),left.length+', '+km(left.reduce((a,f)=>a+D[c][idx[f[1]]],0)))+kv(tr('Nearest rival'),K[NN[c]][1]+', '+km(D[c][NN[c]]))+'<button id="myMap" class="cta sm" style="margin-top:10px">'+tt('Show my next match on the map','اعرض مباراتي القادمة على الخريطة')+'</button></div>';
+el.innerHTML=h;$('myChg').onclick=openClubs;$('myMap').onclick=()=>showNext(c)}
+function openClubs(){$('cg').innerHTML=K.map((k,i)=>[k[1],i]).sort((a,b)=>a[0].localeCompare(b[0],LANG)).map(p=>'<button data-c="'+p[1]+'"><i style="background:rgb('+col[p[1]]+')"></i>'+p[0]+'</button>').join('');$('modal').classList.add('on');[...$('cg').children].forEach(b=>b.onclick=()=>{setMy(+b.dataset.c);closeClubs()});if($('cg').firstChild)$('cg').firstChild.focus()}
+function closeClubs(){$('modal').classList.remove('on');try{localStorage.setItem('seen','1')}catch(e){}}
+function setMy(c){MYC=c;try{localStorage.setItem('myclub',K[c][0])}catch(e){}ods.value=c;lcs.value=c;buildOdy();drawLC();renderMy()}
+$('mSkip').onclick=closeClubs;$('hClub').onclick=openClubs;addEventListener('keydown',e=>{if(e.key==='Escape'){closeClubs();stStop()}});
+const DR=GWS.map(g=>{const rows=FXA.filter(f=>f[2]===g&&idx[f[0]]!=null&&idx[f[1]]!=null);let x_=0,y_=0,t_=0;rows.forEach(f=>{const a=S[idx[f[0]]],b=S[idx[f[1]]];const w_=D[idx[f[0]]][idx[f[1]]];x_+=(a[0]+b[0])/2*w_;y_+=(a[1]+b[1])/2*w_;t_+=w_});return{g,x:x_/(t_||1),y:y_/(t_||1),km:t_}});
+let dpr_=0,dpl=true;const dLL=p=>[55.9-p.y/H*6.1,p.x/W*8-6],dHav=(a,b)=>{const r=Math.PI/180,q=Math.sin((b[0]-a[0])*r/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin((b[1]-a[1])*r/2)**2;return 12742*Math.asin(Math.sqrt(q))};
+function buildDrift(){const ll=DR.map(dLL);let tot=0;for(let i=1;i<ll.length;i++)tot+=dHav(ll[i-1],ll[i]);const iN=ll.reduce((m,p,i)=>p[0]>ll[m][0]?i:m,0),iS=ll.reduce((m,p,i)=>p[0]<ll[m][0]?i:m,0);
+$('drs').innerHTML=kv(tr('Northernmost centre'),tr('GW')+' '+DR[iN].g)+kv(tr('Southernmost centre'),tr('GW')+' '+DR[iS].g)+kv(tr('Distance wandered'),Math.round(tot)+' '+KU())+kv(tr('Busiest gameweek'),tr('GW')+' '+DR.reduce((m,p)=>p.km>m.km?p:m,DR[0]).g)+'<p class="note">'+tt('Each dot is one gameweek, weighted by distance travelled.','كل نقطة جولة واحدة، موزونة بالمسافة المقطوعة.')+'</p>';$('dg').max=DR.length-1}
+function drawDrift(){const g=$('dk').getContext('2d'),n=DR.length;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,560,710);const gr=g.createRadialGradient(280,320,40,280,355,520);gr.addColorStop(0,th.b0);gr.addColorStop(1,th.b1);g.fillStyle=gr;g.fillRect(0,0,560,710);
+g.setTransform(.875,0,0,.875,0,0);g.fillStyle=th.land;g.fill(eng);g.strokeStyle=th.line;g.lineWidth=1.6;g.stroke(eng);
+const cp=Math.min(n-1,Math.floor(dpr_)),fr=Math.min(1,dpr_-cp);
+for(let i=1;i<=cp;i++){g.strokeStyle='rgba('+th.comet+','+(.25+.6*i/n)+')';g.lineWidth=2.5;g.beginPath();g.moveTo(DR[i-1].x,DR[i-1].y);g.lineTo(DR[i].x,DR[i].y);g.stroke()}
+if(cp<n-1){const a=DR[cp],b=DR[cp+1];g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=2.5;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(a.x+(b.x-a.x)*fr,a.y+(b.y-a.y)*fr);g.stroke()}
+for(let i=0;i<=cp;i++){g.fillStyle=i===cp?'#fff':'rgba('+th.comet+',.85)';g.beginPath();g.arc(DR[i].x,DR[i].y,i===cp?7:3.5,0,7);g.fill()}
+S.forEach(p=>{g.fillStyle='rgba(255,255,255,.3)';g.beginPath();g.arc(p[0],p[1],2.5,0,7);g.fill()});
+g.setTransform(1,0,0,1,0,0);g.textAlign='left';g.fillStyle='#fff';g.font='600 18px system-ui,sans-serif';g.fillText('Centre of travel',20,34);g.font='500 15px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.8)';g.fillText(Math.round(DR[cp].km).toLocaleString('en-US')+' '+KU(),20,58);g.font='700 34px Georgia,serif';g.fillStyle='#fff';g.fillText('GW '+DR[cp].g,20,690)}
+$('dpb').onclick=()=>{dpr_=0;dpl=true};$('dg').oninput=()=>{dpl=false;dpr_=+$('dg').value};
+function dloop(){if(!$('p-drift').hidden){if(dpl){dpr_=Math.min(DR.length-1,dpr_+.05);if(dpr_>=DR.length-1)dpl=false;$('dg').value=Math.round(dpr_)}drawDrift()}requestAnimationFrame(dloop)}
+requestAnimationFrame(dloop);buildDrift();
+
+// ===== population reach and road time =====
+const POPD=[["Barnet",51.63,-0.2,390],["Enfield",51.65,-0.08,330],["Haringey",51.59,-0.11,260],["Waltham Forest",51.59,-0.01,280],["Redbridge",51.58,0.07,310],["Havering",51.56,0.21,260],["Barking & Dagenham",51.55,0.13,220],["Newham",51.53,0.03,350],["Tower Hamlets",51.51,-0.03,310],["Hackney",51.55,-0.06,260],["Islington",51.54,-0.1,215],["Camden",51.54,-0.16,210],["City of London",51.515,-0.09,11],["Westminster",51.5,-0.15,205],["Kensington & Chelsea",51.5,-0.19,145],["Hammersmith & Fulham",51.49,-0.22,185],["Brent",51.56,-0.27,340],["Harrow",51.58,-0.34,260],["Hillingdon",51.54,-0.45,310],["Ealing",51.51,-0.32,370],["Hounslow",51.47,-0.37,290],["Richmond",51.46,-0.31,195],["Kingston",51.4,-0.3,170],["Merton",51.41,-0.19,215],["Wandsworth",51.46,-0.19,330],["Lambeth",51.46,-0.12,320],["Southwark",51.47,-0.08,310],["Lewisham",51.45,-0.01,300],["Greenwich",51.48,0.07,290],["Bexley",51.46,0.15,250],["Bromley",51.38,0.05,330],["Croydon",51.37,-0.1,390],["Sutton",51.36,-0.17,210],
+["Manchester",53.48,-2.24,552],["Salford",53.5,-2.35,270],["Trafford",53.42,-2.35,235],["Stockport",53.41,-2.15,294],["Tameside",53.49,-2.08,231],["Oldham",53.54,-2.11,242],["Rochdale",53.62,-2.16,229],["Bury",53.6,-2.3,193],["Bolton",53.58,-2.43,299],["Wigan",53.54,-2.63,331],
+["Liverpool",53.41,-2.98,486],["Sefton",53.5,-3.02,279],["Wirral",53.37,-3.07,324],["Knowsley",53.45,-2.85,154],["St Helens",53.45,-2.74,184],["Warrington",53.39,-2.59,210],["Cheshire East",53.15,-2.35,400],["Cheshire West",53.2,-2.8,357],["Preston",53.76,-2.7,150],["Blackpool",53.82,-3.05,141],["Blackburn",53.75,-2.48,154],["Burnley",53.79,-2.24,88],["Lancaster",54.05,-2.8,144],["Carlisle",54.89,-2.93,108],["Barrow",54.11,-3.23,67],
+["Newcastle",54.98,-1.62,300],["Gateshead",54.95,-1.6,196],["North Tyneside",55.02,-1.5,209],["South Tyneside",54.97,-1.43,148],["Sunderland",54.9,-1.38,277],["County Durham",54.78,-1.57,522],["Middlesbrough",54.57,-1.23,148],["Hartlepool",54.69,-1.21,93],["Stockton",54.57,-1.32,196],["Redcar",54.6,-1.07,136],["Darlington",54.52,-1.55,108],["Northumberland",55.2,-1.75,320],
+["Leeds",53.8,-1.55,812],["Bradford",53.79,-1.75,546],["Kirklees",53.64,-1.78,441],["Calderdale",53.72,-1.87,206],["Wakefield",53.68,-1.5,353],["Sheffield",53.38,-1.47,556],["Rotherham",53.43,-1.35,268],["Doncaster",53.52,-1.13,311],["Barnsley",53.55,-1.48,244],["Hull",53.74,-0.34,267],["East Riding",53.85,-0.5,342],["York",53.96,-1.08,202],["North Yorkshire",54.1,-1.5,615],["Grimsby",53.57,-0.08,156],["Scunthorpe",53.58,-0.65,169],
+["Nottingham",52.95,-1.15,323],["Nottinghamshire",53.1,-1.05,830],["Derby",52.92,-1.48,261],["Derbyshire",53.1,-1.55,800],["Leicester",52.64,-1.13,368],["Leicestershire",52.7,-1.2,712],["Lincolnshire",53.1,-0.3,768],["Northamptonshire",52.25,-0.85,760],["Rutland",52.66,-0.63,41],
+["Birmingham",52.48,-1.9,1145],["Coventry",52.41,-1.51,345],["Dudley",52.51,-2.09,323],["Sandwell",52.52,-2.01,341],["Walsall",52.59,-1.98,284],["Wolverhampton",52.59,-2.13,263],["Solihull",52.41,-1.78,216],["Staffordshire",52.85,-2.05,880],["Stoke",53.0,-2.18,256],["Warwickshire",52.3,-1.55,590],["Worcestershire",52.2,-2.2,604],["Herefordshire",52.08,-2.75,187],["Shropshire",52.65,-2.75,323],["Telford",52.68,-2.45,186],
+["Norfolk",52.65,0.95,916],["Suffolk",52.2,1.0,627],["Ipswich",52.06,1.15,133],["Cambridgeshire",52.35,0.05,680],["Peterborough",52.57,-0.24,216],["Essex",51.8,0.55,1500],["Southend",51.54,0.71,180],["Thurrock",51.49,0.35,176],["Hertfordshire",51.8,-0.2,1200],["Bedford",52.13,-0.47,185],["Central Bedfordshire",51.99,-0.4,294],["Luton",51.88,-0.42,225],
+["Kent",51.25,0.7,1570],["Medway",51.4,0.55,280],["Surrey",51.25,-0.45,1200],["West Sussex",50.95,-0.5,880],["East Sussex",50.92,0.3,550],["Brighton & Hove",50.83,-0.14,277],["Hampshire",51.05,-1.3,1400],["Southampton",50.91,-1.4,249],["Portsmouth",50.8,-1.09,208],["Isle of Wight",50.67,-1.3,140],["Oxfordshire",51.75,-1.25,725],["Buckinghamshire",51.8,-0.8,550],["Milton Keynes",52.04,-0.76,290],["Reading",51.45,-0.97,175],["West Berkshire",51.43,-1.25,160],["Bracknell Forest",51.42,-0.75,125],["Wokingham",51.41,-0.85,177],["Slough",51.51,-0.6,160],["Windsor & Maidenhead",51.48,-0.65,153],
+["Bristol",51.45,-2.59,472],["South Gloucestershire",51.55,-2.4,290],["North Somerset",51.38,-2.85,215],["Bath & NE Somerset",51.35,-2.45,193],["Somerset",51.1,-3.0,570],["Gloucestershire",51.85,-2.2,640],["Wiltshire",51.3,-1.95,510],["Swindon",51.56,-1.78,235],["Bournemouth, Christchurch & Poole",50.74,-1.85,400],["Dorset",50.8,-2.4,380],["Devon",50.75,-3.65,815],["Plymouth",50.38,-4.14,265],["Torbay",50.45,-3.55,139],["Cornwall",50.4,-4.85,570]];
+function loadJSON(n){if(location.protocol==='file:'||/claude/.test(location.hostname))return null;try{const x_=new XMLHttpRequest();x_.open('GET',n,false);x_.send();if(x_.status===200)return JSON.parse(x_.responseText)}catch(e){}return null}
+let POP={club:K.map(()=>0),r50:K.map(()=>0),src:'',approx:true,cov:0,tot:0};
+(function(){const pf=loadJSON('population.json');if(pf&&pf.clubs){const c=K.map(k=>+pf.clubs[k[0]]||0);POP={club:c,r50:K.map(k=>pf.radius50?+pf.radius50[k[0]]||0:0),src:pf.source||'population.json',approx:false,cov:1,tot:c.reduce((a,b)=>a+b,0),ct:pf.contested||null};return}
+const pop=K.map(()=>0),r50=K.map(()=>0);let tot=0;POPD.forEach(p=>{let b=0,bd=1e9;K.forEach((k,i)=>{const d=dHav([p[1],p[2]],[k[2],k[3]]);if(d<bd){bd=d;b=i}if(d<=50)r50[i]+=p[3]*1000});pop[b]+=p[3]*1000;tot+=p[3]*1000});POP={club:pop,r50,src:'',approx:true,cov:tot/56490000,tot}})();
+let TTR=false;const TTM=K.map(()=>K.map(()=>0));
+(function(){const d=loadJSON('travel.json');if(d&&d.codes&&d.minutes&&d.codes.every(c=>idx[c]!=null)&&d.codes.length===K.length){d.codes.forEach((ca,a)=>d.codes.forEach((cb,b)=>{TTM[idx[ca]][idx[cb]]=+d.minutes[a][b]||0}));TTR=true}else{K.forEach((_,a)=>K.forEach((_,b)=>{TTM[a][b]=D[a][b]*1.2/75*60}))}})();
+const hmn=m=>{m=Math.round(m);const h=Math.floor(m/60),r=m%60;return LANG==='ar'?(h?h+' س ':'')+r+' د':(h?h+' h ':'')+r+' min'},ttl=(a,b)=>(TTR?'':'\u2248 ')+hmn(TTM[a][b]);
+const fmP=v=>v>=1e6?(v/1e6).toFixed(2)+(LANG==='ar'?' مليون':'M'):Math.round(v/1e3)+(LANG==='ar'?' ألف':'k');
+const pvc=document.createElement('canvas');pvc.width=gw;pvc.height=gh;const hx=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+function drawPop(){const g=$('ppc').getContext('2d'),mx=Math.max(...POP.club)||1,c0=hx(th.land),c1=th.comet.split(',').map(Number),pg=pvc.getContext('2d'),im=pg.createImageData(gw,gh),cl=POP.club.map(v=>{const t=Math.sqrt(v/mx);return[0,1,2].map(k=>Math.round(c0[k]+(c1[k]-c0[k])*t))});
+for(let n=0;n<gw*gh;n++){const c=cl[ID[n]],o=n*4,e=EDG[n];im.data[o]=e?255:c[0];im.data[o+1]=e?255:c[1];im.data[o+2]=e?255:c[2];im.data[o+3]=e?210:255}pg.putImageData(im,0,0);
+g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,560,710);g.fillStyle=th.b1;g.fillRect(0,0,560,710);g.setTransform(.875,0,0,.875,0,0);g.save();g.clip(eng);g.imageSmoothingEnabled=true;g.drawImage(pvc,0,0,W,H);g.restore();g.strokeStyle=th.line;g.lineWidth=1.6;g.stroke(eng);
+g.font='700 12px system-ui,sans-serif';g.textAlign='left';g.textBaseline='alphabetic';
+S.forEach((p,i)=>{g.fillStyle='#fff';g.beginPath();g.arc(p[0],p[1],3.5,0,7);g.fill();if(!CR[i]){const t_=K[i][0]+' '+fmP(POP.club[i]);g.lineWidth=3;g.strokeStyle=th.b1;g.strokeText(t_,p[0]+7,p[1]+4);g.fillStyle='#fff';g.fillText(t_,p[0]+7,p[1]+4)}});
+g.setTransform(1,0,0,1,0,0);g.fillStyle='#fff';g.font='600 18px system-ui,sans-serif';g.fillText('People closest to each stadium',20,34);g.font='500 15px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.8)';g.fillText(fmP(POP.tot),20,58);
+const ord=K.map((_,i)=>i).sort((a,b)=>POP.club[b]-POP.club[a]),top=POP.club[ord[0]]||1,L6=['ARS','CHE','TOT','FUL','BRE','CRY'].filter(c=>idx[c]!=null),l6=L6.reduce((a,c)=>a+POP.club[idx[c]],0);
+$('ppx').innerHTML=kv(tr('Largest catchment'),K[ord[0]][1]+', '+fmP(POP.club[ord[0]]))+kv(tr('Smallest catchment'),K[ord[ord.length-1]][1]+', '+fmP(POP.club[ord[ord.length-1]]))+(L6.length===6?kv(tr('The six London clubs share'),fmP(l6)+', '+(l6/(POP.tot||1)*100).toFixed(0)+'%'):'');
+$('pps').innerHTML=ord.map(i=>'<div class="row" data-i="'+i+'"><span>'+K[i][1]+'</span><b>'+fmP(POP.club[i])+'</b><span class="bar"><i style="width:'+(POP.club[i]/top*100).toFixed(1)+'%"></i></span></div>').join('');
+[...$('pps').children].forEach(e=>e.onclick=()=>{pick(+e.dataset.i);document.querySelector('.map').scrollIntoView({behavior:'smooth',block:'center'})});
+$('ppn').textContent=POP.approx?tt('Indicative figures: about '+POPD.length+' local-authority points from the 2021 Census, rounded, covering '+Math.round(POP.cov*100)+'% of England. Run population_pipeline.py with ONS data for exact numbers.','أرقام استرشادية: نحو '+POPD.length+' نقطة سلطات محلية من تعداد 2021 بتقريب، تغطي '+Math.round(POP.cov*100)+'% من إنجلترا. شغّل population_pipeline.py ببيانات ONS للأرقام الدقيقة.'):tt('Source: ','المصدر: ')+POP.src}
+function drawRT(){const g=$('rtc').getContext('2d'),n=K.length;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,840,560);g.fillStyle=th.b1;g.fillRect(0,0,840,560);
+const fin=CUM[CUM.length-1],tm=K.map((_,i)=>FXA.filter(f=>f[0]===K[i][0]&&idx[f[1]]!=null).reduce((a,f)=>a+TTM[i][idx[f[1]]],0)),rk=a=>{const o=a.map((v,i)=>[v,i]).sort((x_,y_)=>y_[0]-x_[0]),r=[];o.forEach((p,k)=>{r[p[1]]=k});return r},rd=rk(fin),rt=rk(tm),rh=Math.min(24,470/n),y0=62;
+g.font='600 14px system-ui,sans-serif';g.textBaseline='middle';g.fillStyle='rgba(255,255,255,.85)';g.textAlign='center';g.fillText('By distance',190,30);g.fillText('By road time',650,30);
+K.forEach((_,i)=>{const yl=y0+rd[i]*rh+rh/2,yr=y0+rt[i]*rh+rh/2,ch=rd[i]-rt[i];g.strokeStyle=ch===0?'rgba(255,255,255,.28)':ch>0?'rgba('+th.comet+',.95)':'rgba('+th.long+',.95)';g.lineWidth=ch===0?1.5:3.2;g.beginPath();g.moveTo(300,yl);g.bezierCurveTo(400,yl,440,yr,540,yr);g.stroke();
+g.font='500 13px system-ui,sans-serif';g.fillStyle='#fff';g.textAlign='right';g.fillText((rd[i]+1)+'  '+K[i][1],292,yl);g.textAlign='left';g.fillText(K[i][1]+'  '+(rt[i]+1),548,yr)});
+g.font='500 12px system-ui,sans-serif';[['rgb('+th.comet+')','Ranks higher by road time'],['rgb('+th.long+')','Ranks lower by road time']].forEach((q,k)=>{g.strokeStyle=q[0];g.lineWidth=3;g.beginPath();g.moveTo(20+k*260,544);g.lineTo(48+k*260,544);g.stroke();g.fillStyle='rgba(255,255,255,.8)';g.textAlign='left';g.fillText(q[1],56+k*260,544)});
+const mi=tm.indexOf(Math.max(...tm)),bc=K.map((_,i)=>[Math.abs(rd[i]-rt[i]),i]).sort((a,b)=>b[0]-a[0])[0];let lb=null;FXA.forEach(f=>{const a=idx[f[0]],h=idx[f[1]];if(a==null||h==null)return;if(!lb||TTM[a][h]>TTM[lb[0]][lb[1]])lb=[a,h]});
+$('rts').innerHTML=kv(tr('Most road time'),K[mi][1]+', '+Math.round(tm[mi]/60)+(LANG==='ar'?' س':' h'))+kv(tr('Biggest rank change'),bc[0]?K[bc[1]][1]+', #'+(rd[bc[1]]+1)+' \u2192 #'+(rt[bc[1]]+1):'\u2014')+(lb?kv(tr('Longest trip by road'),K[lb[0]][0]+' '+tr('at')+' '+K[lb[1]][0]+', '+ttl(lb[0],lb[1])):'');
+$('rtn').textContent=TTR?tt('Road times from the routing file travel.json (driving).','أزمنة الطريق من ملف التوجيه travel.json (سيارة).'):tt('Estimated times (distance x 1.2 at 75 km/h), so the two orders match. Run build_travel_times.py and host travel.json for real road times.','أزمنة تقديرية (المسافة × 1.2 بسرعة 75 كم/س)، لذلك الترتيبان متطابقان. شغّل build_travel_times.py وضع travel.json لأزمنة الطريق الحقيقية.')}
+
+let CTW=5;const CELL=(W/gw/KM)*(H/gh/KM),cvc=document.createElement('canvas');cvc.width=gw;cvc.height=gh;
+function drawCT(){const g=$('ctc').getContext('2d'),cg=cvc.getContext('2d'),im=cg.createImageData(gw,gh),pal=th.pal,pair={},own=K.map(()=>0);let ar=0,tot=0;
+for(let n=0;n<gw*gh;n++){const o=n*4,a=ID[n],c=pal[a%5],hot=INA[n]&&GAP[n]<=CTW;if(INA[n])tot++;
+if(hot){im.data[o]=255;im.data[o+1]=255;im.data[o+2]=255;im.data[o+3]=235;ar++;own[a]++;const b=ID2[n],key=a<b?a+'-'+b:b+'-'+a;pair[key]=(pair[key]||0)+1}else{im.data[o]=c[0];im.data[o+1]=c[1];im.data[o+2]=c[2];im.data[o+3]=105}}
+cg.putImageData(im,0,0);g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,560,710);g.fillStyle=th.b1;g.fillRect(0,0,560,710);g.setTransform(.875,0,0,.875,0,0);g.fillStyle=th.land;g.fill(eng);g.save();g.clip(eng);g.imageSmoothingEnabled=true;g.drawImage(cvc,0,0,W,H);g.restore();g.strokeStyle=th.line;g.lineWidth=1.6;g.stroke(eng);
+g.font='700 11px system-ui,sans-serif';g.textAlign='left';g.textBaseline='alphabetic';
+S.forEach((p,i)=>{g.fillStyle=th.b1;g.beginPath();g.arc(p[0],p[1],4.2,0,7);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(p[0],p[1],2.6,0,7);g.fill();if(!CR[i]){g.lineWidth=3;g.strokeStyle=th.b1;g.strokeText(K[i][0],p[0]+7,p[1]+4);g.fillStyle='#fff';g.fillText(K[i][0],p[0]+7,p[1]+4)}});
+g.setTransform(1,0,0,1,0,0);g.fillStyle='#fff';g.font='600 18px system-ui,sans-serif';g.fillText('Contested ground',20,34);g.font='500 15px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.8)';g.fillText(CTW+' '+KU(),20,58);
+const nm_=k=>{const q=k.split('-');return K[+q[0]][1]+' '+tr('and')+' '+K[+q[1]][1]},ex=POP.ct&&POP.ct[String(CTW)];
+const ex_=ex?Object.entries(ex.pairs||{}).filter(e=>{const q=e[0].split('-');return idx[q[0]]!=null&&idx[q[1]]!=null}).sort((a,b)=>b[1]-a[1]):null;
+const rows=ex_?ex_.slice(0,8).map(e=>{const q=e[0].split('-');return[K[idx[q[0]]][1]+' '+tr('and')+' '+K[idx[q[1]]][1],fmP(e[1]),e[1]/ex_[0][1]]}):Object.entries(pair).sort((a,b)=>b[1]-a[1]).slice(0,8).map(e=>[nm_(e[0]),Math.round(e[1]*CELL).toLocaleString('en-US')+' '+KU()+'\u00b2',e[1]/Math.max(...Object.values(pair),1)]);
+const ox=K.map((_,i)=>[own[i]/Math.max(1,CNT[i]),i]).sort((a,b)=>b[0]-a[0])[0];
+$('ctx').innerHTML=(ex?kv(tr('People in contested ground'),fmP(ex.total)+', '+(ex.total/(POP.tot||1)*100).toFixed(0)+'%'):'')+kv(tr('Contested area'),Math.round(ar*CELL).toLocaleString('en-US')+' '+KU()+'\u00b2, '+(ar/Math.max(1,tot)*100).toFixed(0)+'%')+kv(tr('Most exposed club'),K[ox[1]][1]+', '+Math.round(ox[0]*100)+'%')+(rows[0]?kv(tr('Most contested border'),rows[0][0]):'');
+$('cts').innerHTML=rows.map(r=>'<div class="row"><span>'+r[0]+'</span><b>'+r[1]+'</b><span class="bar"><i style="width:'+(r[2]*100).toFixed(1)+'%"></i></span></div>').join('');
+$('ctn').textContent=ex?tt('People counts come from the ONS file loaded in population.json.','أعداد السكان من ملف ONS المحمّل في population.json.'):tt('Areas come from the geometry. People counts need population.json (run population_pipeline.py).','المساحات من الهندسة. أعداد السكان تحتاج population.json (شغّل population_pipeline.py).')}
+[...document.querySelectorAll('#ctw button')].forEach(b=>b.onclick=()=>{CTW=+b.dataset.w;[...document.querySelectorAll('#ctw button')].forEach(c=>c.setAttribute('aria-pressed',c===b));drawCT()});
+function readHash(){const m={};(location.hash||'').slice(1).split('&').forEach(x=>{const q=x.split('=');if(q[0])m[q[0]]=q[1]});if(m.gw&&GWS.includes(+m.gw)){curGW=+m.gw;$('gw').value=curGW;setGW(curGW)}if(m.club&&idx[m.club]!=null)pick(idx[m.club])}
+function shareLink(){const h='#gw='+curGW+(sel>=0?'&club='+K[sel][0]:MYC>=0?'&club='+K[MYC][0]:''),u=location.href.split('#')[0]+h,b=$('bLink');try{history.replaceState(null,'',h)}catch(e){}
+const done=()=>{b.textContent=tt('Copied','تم النسخ');setTimeout(()=>{b.textContent=tt('Copy link','نسخ الرابط')},1600)};(navigator.clipboard?navigator.clipboard.writeText(u).then(done,done):Promise.resolve().then(done))}
+$('bLink').onclick=shareLink;
+function initUI(){setDn();$('hs1').textContent=FXA.length;$('hs2').textContent=K.length;$('hs3').textContent=GWS.length;
+$('hsvg').innerHTML='<path d="M'+O.map(p=>p[0].toFixed(0)+' '+p[1].toFixed(0)).join('L')+'Z" fill="rgba(255,255,255,.05)" stroke="#00ff85" stroke-width="2" stroke-linejoin="round"/>'+S.map(p=>'<circle cx="'+p[0].toFixed(0)+'" cy="'+p[1].toFixed(0)+'" r="4" fill="#fff" opacity=".8"/>').join('');
+if(MYC>=0){ods.value=MYC;lcs.value=MYC;buildOdy();drawLC()}
+if(LANG==='ar')applyLang();else renderMy();
+readHash();let seen=false;try{seen=!!localStorage.getItem('seen')}catch(e){}if(!seen&&MYC<0&&!location.hash)setTimeout(openClubs,1400)}
+drawLab();
+setGW(curGW);
+initUI();
+card();requestAnimationFrame(frame);
+</script></body></html>
