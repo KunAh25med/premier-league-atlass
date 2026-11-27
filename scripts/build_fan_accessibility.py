@@ -30,7 +30,8 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "data" / "fan-accessibility"
 CACHE = ROOT / ".cache" / "fan-accessibility"
 POP_URL = "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimatesnationalstatistics%2Fmid2022revisednov2025tomid2024%2Fsapelsoabroadage20222024.xlsx"
-CENTROIDS_URL = "https://dservices1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/services/Lower_Layer_Super_Output_Areas_(December_2021)_EW_Population_Weighted_Centroids/WFSServer"BOUNDARIES_URL = ("https://opendata.arcgis.com/api/v3/datasets/04c65a08ecff4858bffc16e9ca9356f4_0/downloads/data?format=geojson&spatialRefId=4326")
+CENTROIDS_URL = "https://dservices1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/services/Lower_Layer_Super_Output_Areas_(December_2021)_EW_Population_Weighted_Centroids/WFSServer"
+BOUNDARIES_URL = "https://opendata.arcgis.com/api/v3/datasets/04c65a08ecff4858bffc16e9ca9356f4_0/downloads/data?format=geojson&spatialRefId=4326"
 ORS_URL = "https://api.heigit.org/v2/matrix/driving-car"
 CHUNK_ORIGINS = 150  # 150 x 20 = 3,000 matrix pairs (< 3,500 hosted limit)
 REQUEST_GAP = 1.6    # stay below the hosted API's per-minute request limit
