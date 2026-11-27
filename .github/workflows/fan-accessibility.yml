@@ -1,0 +1,84 @@
+name: Build Fan Accessibility & Equity
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fan-accessibility-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Restore ONS downloads and routing checkpoint
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/fan-accessibility
+          key: fan-accessibility-cache-${{ github.run_id }}
+          restore-keys: |
+            fan-accessibility-cache-
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements-fan-accessibility.txt
+
+      - name: Build population-weighted driving accessibility
+        env:
+          ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
+        run: python scripts/build_fan_accessibility.py
+
+      - name: Save ONS downloads and routing checkpoint
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/fan-accessibility
+          key: fan-accessibility-cache-${{ github.run_id }}
+
+      - name: Verify generated outputs
+        if: success()
+        run: |
+          set -euo pipefail
+          test -s data/fan-accessibility/fan_accessibility.geojson.gz
+          test -s data/fan-accessibility/fan_accessibility_summary.json
+          python - <<'PY'
+          import gzip, json
+          from pathlib import Path
+          p = Path('data/fan-accessibility')
+          with gzip.open(p/'fan_accessibility.geojson.gz', 'rt', encoding='utf-8') as f:
+              fc = json.load(f)
+          summary = json.loads((p/'fan_accessibility_summary.json').read_text())
+          assert fc.get('type') == 'FeatureCollection'
+          assert len(fc.get('features', [])) >= 30000, len(fc.get('features', []))
+          assert summary['mapped_lsoa_count'] == len(fc['features'])
+          assert summary['routed_lsoa_count'] >= 30000
+          assert len(summary['club_catchments']) == 20
+          print('Verified:', len(fc['features']), 'LSOAs; population:', summary['population_total'])
+          print('Weighted median:', summary['weighted_median_minutes'], 'minutes')
+          PY
+
+      - name: Commit generated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/fan-accessibility/fan_accessibility.geojson.gz data/fan-accessibility/fan_accessibility_summary.json
+          if git diff --cached --quiet; then
+            echo "No generated data changes."
+          else
+            git commit -m "data: build population-weighted fan accessibility"
+            git push
+          fi
