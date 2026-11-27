@@ -454,8 +454,8 @@ def main() -> None:
     centroids_file = cache / "lsoa_population_weighted_centroids.geojson"
     boundaries_file = cache / "lsoa_boundaries_2021.geojson"
     download(POP_URL, pop_xlsx)
-download_arcgis_layer(CENTROIDS_URL, CENTROIDS_FILE)
-download(BOUNDARIES_URL, boundaries_file)
+    download_arcgis_layer(CENTROIDS_URL, CENTROIDS_FILE)
+    download(BOUNDARIES_URL, boundaries_file)
     population = read_population(pop_xlsx)
     centroid_features = read_feature_collection(centroids_file)
     boundary_features = read_feature_collection(boundaries_file)
