@@ -28,9 +28,7 @@ POP_URL = (
     "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimates%2Fmid2022revisednov2025tomid2024%2Fsapelsoasyoa20222024.xlsx"
 )
 CENTROIDS_URL = (
-    "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/"
-    "LSOA_PopCentroids_EW_2021_V4/FeatureServer/0"
-
+    CENTROIDS_FILE = DATA_DIR / "lsoa_population_weighted_centroids.geojson"
 )
 BOUNDARIES_URL = (
     "https://opendata.arcgis.com/api/v3/datasets/"
