@@ -111,7 +111,7 @@ def download(url: str, target: Path) -> None:
                 if response.status_code in (429, 500, 502, 503, 504):
                     response.raise_for_status()
 
-                response.raise_for_status()
+                    response.raise_for_status()
 
                 with temp_target.open("wb") as f:
                     for block in response.iter_content(1024 * 1024):
