@@ -1,9 +1,11 @@
+
 #!/usr/bin/env python3
 """Build population-weighted, road-network accessibility for Premier League stadiums.
 
 Downloads ONS source data automatically, requests batched driving matrices from
 OpenRouteService, and writes a compact GeoJSON.gz plus summary JSON for GitHub Pages.
 """
+
 from __future__ import annotations
 
 import csv
@@ -22,51 +24,174 @@ import pandas as pd
 import requests
 from shapely.geometry import shape, mapping
 
+
+# ============================================================
+# PROJECT PATHS AND SOURCE DATA
+# ============================================================
+
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "data" / "fan-accessibility"
+
 POP_URL = (
     "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimates%2Fmid2022revisednov2025tomid2024%2Fsapelsoasyoa20222024.xlsx"
+)
+
 CENTROIDS_URL = (
     "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/"
     "LSOA_PopCentroids_EW_2021_V4/FeatureServer/0"
 )
 
-CENTROIDS_FILE = DATA_DIR / "lsoa_population_weighted_centroids.geojson"
+CENTROIDS_FILE = OUT_DIR / "lsoa_population_weighted_centroids.geojson"
+
 BOUNDARIES_URL = (
     "https://opendata.arcgis.com/api/v3/datasets/"
     "04c65a08ecff4858bffc16e9ca9356f4_0/downloads/data"
     "?format=geojson&spatialRefId=4326"
 )
+
 ORS_URL = "https://api.openrouteservice.org/v2/matrix/driving-car"
+
 YEAR = "mid-2024"
-CHUNK_ORIGINS = 150  # 150 x 20 = 3,000 matrix cells; ORS standard max is 3,500.
-REQUEST_GAP_SECONDS = 1.6  # Stay below the standard 40 matrix requests/minute limit.
+CHUNK_ORIGINS = 150
+REQUEST_GAP_SECONDS = 1.6
 TIMEOUT = 180
 UA = "PremierLeagueAtlas-FanAccessibility/1.0 (research portfolio)"
 
+
+# ============================================================
+# LOGGING
+# ============================================================
 
 def log(message: str) -> None:
     print(message, flush=True)
 
 
-     
+# ============================================================
+# DOWNLOAD ONS FILES
+# ============================================================
+
 def download(url: str, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
 
-    
+    if target.exists() and target.stat().st_size > 100_000:
+        if target.suffix == ".geojson":
+            try:
+                with target.open("r", encoding="utf-8") as f:
+                    cached = json.load(f)
+                if cached.get("type") == "FeatureCollection":
+                    log(f"Using cached {target.name}")
+                    return
+            except (OSError, json.JSONDecodeError):
+                log(f"Cached {target.name} is invalid; downloading again.")
+        else:
+            log(f"Using cached {target.name}")
+            return
+
+    log(f"Downloading {target.name} ...")
+
+    temp_target = target.with_name(target.name + ".part")
+    retry_delays = [5, 10, 20, 40, 60, 60, 60]
+
+    for attempt in range(len(retry_delays) + 1):
+        total = 0
+
+        try:
+            if temp_target.exists():
+                temp_target.unlink()
+
+            with requests.get(
+                url,
+                stream=True,
+                timeout=(30, 240),
+                headers={
+                    "User-Agent": UA,
+                    "Accept": "application/geo+json, application/json, */*",
+                },
+            ) as response:
+                if response.status_code in (429, 500, 502, 503, 504):
+                    response.raise_for_status()
+
+                response.raise_for_status()
+
+                with temp_target.open("wb") as f:
+                    for block in response.iter_content(1024 * 1024):
+                        if block:
+                            f.write(block)
+                            total += len(block)
+
+            if total < 10_000:
+                raise RuntimeError(
+                    f"Downloaded file is unexpectedly small: {total} bytes"
+                )
+
+            if target.suffix == ".geojson":
+                with temp_target.open("r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                if data.get("type") != "FeatureCollection":
+                    raise RuntimeError("Downloaded GeoJSON is not a FeatureCollection.")
+
+                if not data.get("features"):
+                    raise RuntimeError("Downloaded GeoJSON contains no features.")
+
+            temp_target.replace(target)
+            log(f"Downloaded {target.name}: {total:,} bytes")
+            return
+
+        except requests.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else None
+
+            if status not in (429, 500, 502, 503, 504):
+                raise
+
+            error = exc
+
+        except (
+            requests.RequestException,
+            RuntimeError,
+            json.JSONDecodeError,
+        ) as exc:
+            error = exc
+
+        finally:
+            if temp_target.exists():
+                temp_target.unlink()
+
+        if attempt >= len(retry_delays):
+            raise RuntimeError(
+                f"Could not download {target.name} after "
+                f"{attempt + 1} attempts. Last error: {error}"
+            )
+
+        wait = retry_delays[attempt]
+        log(
+            f"Download attempt {attempt + 1} failed: {error}. "
+            f"Retrying in {wait} seconds..."
+        )
+        time.sleep(wait)
+
+
+# ============================================================
+# DOWNLOAD ARCGIS FEATURESERVER LAYER
+# ============================================================
+
 def download_arcgis_layer(endpoint: str, target: Path) -> None:
     """Download an ArcGIS FeatureServer layer as GeoJSON in pages."""
+
     target.parent.mkdir(parents=True, exist_ok=True)
 
-    # Reuse a valid cached file
     if target.exists() and target.stat().st_size > 100_000:
         try:
             with target.open("r", encoding="utf-8") as f:
                 cached = json.load(f)
 
-            if cached.get("type") == "FeatureCollection" and cached.get("features"):
+            if (
+                cached.get("type") == "FeatureCollection"
+                and cached.get("features")
+            ):
                 log(f"Using cached {target.name}")
                 return
+
         except (OSError, json.JSONDecodeError):
             pass
 
@@ -81,6 +206,85 @@ def download_arcgis_layer(endpoint: str, target: Path) -> None:
             params=params,
             timeout=(30, 180),
         )
+        response.raise_for_status()
+
+        data = response.json()
+
+        if "error" in data:
+            raise RuntimeError(f"ArcGIS error: {data['error']}")
+
+        return data
+
+    count_data = get_json({
+        "where": "1=1",
+        "returnCountOnly": "true",
+        "f": "json",
+    })
+
+    total = int(count_data["count"])
+
+    if total == 0:
+        raise RuntimeError("ONS centroid layer returned zero records.")
+
+    log(f"ONS centroid records available: {total:,}")
+
+    features = []
+    page_size = 2000
+    offset = 0
+
+    while offset < total:
+        data = get_json({
+            "where": "1=1",
+            "outFields": "*",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "resultOffset": offset,
+            "resultRecordCount": page_size,
+            "orderByFields": "OBJECTID",
+            "f": "geojson",
+        })
+
+        page = data.get("features", [])
+
+        if not page:
+            break
+
+        features.extend(page)
+        offset += len(page)
+
+        log(
+            f"Downloaded centroid records: "
+            f"{len(features):,}/{total:,}"
+        )
+
+    if len(features) != total:
+        raise RuntimeError(
+            f"Incomplete centroid download: "
+            f"{len(features):,}/{total:,}"
+        )
+
+    output = {
+        "type": "FeatureCollection",
+        "features": features,
+    }
+
+    temp_target = target.with_name(target.name + ".part")
+
+    try:
+        with temp_target.open("w", encoding="utf-8") as f:
+            json.dump(output, f, ensure_ascii=False)
+
+        temp_target.replace(target)
+
+    finally:
+        if temp_target.exists():
+            temp_target.unlink()
+
+    log(
+        f"Downloaded {target.name}: "
+        f"{target.stat().st_size:,} bytes"
+    )
+
         response.raise_for_status()
 
         data = response.json()
