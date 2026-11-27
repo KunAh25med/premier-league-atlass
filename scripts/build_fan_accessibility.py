@@ -29,8 +29,7 @@ from shapely.geometry import mapping, shape
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "data" / "fan-accessibility"
 CACHE = ROOT / ".cache" / "fan-accessibility"
-POP_URL = ("https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Flowersuperoutputareamidyearpopulationestimates%2Fmid2022revisednov2025tomid2024%2Fsapelsoasyoa20222024.xlsx")
-CENTROIDS_URL = "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/LSOA_PopCentroids_EW_2021_V4/FeatureServer/0"
+POP_URL = "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimatesnationalstatistics%2Fmid2022revisednov2025tomid2024%2Fsapelsoabroadage20222024.xlsx"CENTROIDS_URL = "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/LSOA_PopCentroids_EW_2021_V4/FeatureServer/0"
 BOUNDARIES_URL = ("https://opendata.arcgis.com/api/v3/datasets/04c65a08ecff4858bffc16e9ca9356f4_0/downloads/data?format=geojson&spatialRefId=4326")
 ORS_URL = "https://api.heigit.org/v2/matrix/driving-car"
 CHUNK_ORIGINS = 150  # 150 x 20 = 3,000 matrix pairs (< 3,500 hosted limit)
