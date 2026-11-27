@@ -43,12 +43,22 @@ jobs:
           ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
         run: python scripts/build_fan_accessibility.py
 
+      
+      - name: Check generated files
+        run: |
+          echo "Checking generated data..."
+          ls -lah data/fan-accessibility/
+          test -f data/fan-accessibility/fan_accessibility.geojson.gz
+          test -f data/fan-accessibility/fan_accessibility_summary.json
+
       - name: Commit generated data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add data/fan-accessibility/fan_accessibility.geojson.gz
           git add data/fan-accessibility/fan_accessibility_summary.json
+
           if git diff --cached --quiet; then
             echo "No data changes to commit."
           else
