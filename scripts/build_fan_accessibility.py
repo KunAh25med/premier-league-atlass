@@ -30,8 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "data" / "fan-accessibility"
 CACHE = ROOT / ".cache" / "fan-accessibility"
 POP_URL = "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimatesnationalstatistics%2Fmid2022revisednov2025tomid2024%2Fsapelsoabroadage20222024.xlsx"
-CENTROIDS_URL = "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/LSOA_PopCentroids_EW_2021_V4/FeatureServer/0"
-BOUNDARIES_URL = ("https://opendata.arcgis.com/api/v3/datasets/04c65a08ecff4858bffc16e9ca9356f4_0/downloads/data?format=geojson&spatialRefId=4326")
+CENTROIDS_URL = "https://dservices1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/services/Lower_Layer_Super_Output_Areas_(December_2021)_EW_Population_Weighted_Centroids/WFSServer"BOUNDARIES_URL = ("https://opendata.arcgis.com/api/v3/datasets/04c65a08ecff4858bffc16e9ca9356f4_0/downloads/data?format=geojson&spatialRefId=4326")
 ORS_URL = "https://api.heigit.org/v2/matrix/driving-car"
 CHUNK_ORIGINS = 150  # 150 x 20 = 3,000 matrix pairs (< 3,500 hosted limit)
 REQUEST_GAP = 1.6    # stay below the hosted API's per-minute request limit
@@ -112,47 +111,113 @@ def download_centroids(target: Path) -> None:
     session = requests.Session()
     session.headers.update({"User-Agent": UA})
 
-    def query(params: dict[str, str]) -> dict:
-        response = session.get(f"{CENTROIDS_URL}/query", params=params, timeout=TIMEOUT)
-        response.raise_for_status()
-        data = response.json()
-        if "error" in data:
-            raise RuntimeError(f"ONS FeatureServer error: {data['error']}")
-        return data
+   
+def download_centroids(target: Path) -> None:
+    import xml.etree.ElementTree as ET
 
-    total = int(query({"where": "1=1", "returnCountOnly": "true", "f": "json"})["count"])
-    if total < 30_000:
-        raise RuntimeError(f"ONS centroid layer unexpectedly small: {total:,}")
-    log(f"ONS centroid records available: {total:,}")
-    features: list[dict] = []
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    if target.exists() and target.stat().st_size > 100_000:
+        try:
+            cached = json.loads(target.read_text(encoding="utf-8"))
+            if cached.get("type") == "FeatureCollection" and cached.get("features"):
+                log(f"Using cached {target.name}")
+                return
+        except Exception:
+            pass
+
+    session = requests.Session()
+    session.headers.update({"User-Agent": UA})
+
+    # 1. Discover the WFS feature type.
+    response = session.get(
+        CENTROIDS_URL,
+        params={
+            "service": "WFS",
+            "request": "GetCapabilities",
+            "version": "2.0.0",
+        },
+        timeout=TIMEOUT,
+    )
+    response.raise_for_status()
+
+    root = ET.fromstring(response.content)
+
+    feature_types = [
+        element.text.strip()
+        for element in root.iter()
+        if element.tag.split("}")[-1] == "Name"
+        and element.text
+        and "Centroid" in element.text
+    ]
+
+    if not feature_types:
+        raise RuntimeError(
+            "Could not discover centroid WFS feature type. "
+            "Check GetCapabilities response."
+        )
+
+    type_name = feature_types[0]
+    log(f"Centroid WFS layer: {type_name}")
+
+    # 2. Download GeoJSON in pages.
+    features = []
     offset = 0
     page_size = 2_000
-    while offset < total:
-        page = query({
-            "where": "1=1", "outFields": "*", "returnGeometry": "true",
-            "outSR": "4326", "resultOffset": str(offset),
-            "resultRecordCount": str(page_size), "orderByFields": "OBJECTID", "f": "geojson",
-        }).get("features", [])
+
+    while True:
+        response = session.get(
+            CENTROIDS_URL,
+            params={
+                "service": "WFS",
+                "version": "2.0.0",
+                "request": "GetFeature",
+                "typeNames": type_name,
+                "outputFormat": "application/json",
+                "srsName": "EPSG:4326",
+                "count": page_size,
+                "startIndex": offset,
+            },
+            timeout=TIMEOUT,
+        )
+        response.raise_for_status()
+
+        try:
+            data = response.json()
+        except ValueError:
+            raise RuntimeError(
+                "WFS did not return GeoJSON. "
+                f"Response begins: {response.text[:500]}"
+            )
+
+        page = data.get("features", [])
+
         if not page:
             break
+
         features.extend(page)
         offset += len(page)
-        log(f"Downloaded centroids: {len(features):,}/{total:,}")
-    if len(features) != total:
-        raise RuntimeError(f"Incomplete centroid download: {len(features):,}/{total:,}")
-    atomic_json(target, {"type": "FeatureCollection", "features": features})
 
+        log(f"Downloaded centroids: {len(features):,}")
 
-def norm(value: Any) -> str:
-    return re.sub(r"[^a-z0-9]+", "", str(value).strip().lower())
+        if len(page) < page_size:
+            break
 
+    if len(features) < 30_000:
+        raise RuntimeError(
+            f"Centroid download incomplete or unexpectedly small: "
+            f"{len(features):,} records"
+        )
 
-def find_col(columns, patterns: list[str]):
-    for col in columns:
-        n = norm(col)
-        if any(re.search(p, n) for p in patterns):
-            return col
-    return None
+    atomic_json(
+        target,
+        {
+            "type": "FeatureCollection",
+            "features": features,
+        },
+    )
+
+    log(f"Saved {len(features):,} centroid features")
 
 
 def read_population(path: Path) -> dict[str, int]:
