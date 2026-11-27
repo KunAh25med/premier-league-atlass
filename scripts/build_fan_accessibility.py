@@ -28,9 +28,9 @@ POP_URL = (
     "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimates%2Fmid2022revisednov2025tomid2024%2Fsapelsoasyoa20222024.xlsx"
 )
 CENTROIDS_URL = (
-    "https://opendata.arcgis.com/api/v3/datasets/"
-    "32729e42d05e4e23bc7e43a36aa4ae8b_0/downloads/data"
-    "?format=geojson&spatialRefId=4326"
+    "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/"
+    "LSOA_PopCentroids_EW_2021_V4/FeatureServer/0"
+
 )
 BOUNDARIES_URL = (
     "https://opendata.arcgis.com/api/v3/datasets/"
@@ -52,6 +52,108 @@ def log(message: str) -> None:
      
 def download(url: str, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
+
+    
+def download_arcgis_layer(endpoint: str, target: Path) -> None:
+    """Download an ArcGIS FeatureServer layer as GeoJSON in pages."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    # Reuse a valid cached file
+    if target.exists() and target.stat().st_size > 100_000:
+        try:
+            with target.open("r", encoding="utf-8") as f:
+                cached = json.load(f)
+
+            if cached.get("type") == "FeatureCollection" and cached.get("features"):
+                log(f"Using cached {target.name}")
+                return
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    log(f"Downloading {target.name} from ONS FeatureServer ...")
+
+    session = requests.Session()
+    session.headers.update({"User-Agent": UA})
+
+    def get_json(params):
+        response = session.get(
+            f"{endpoint}/query",
+            params=params,
+            timeout=(30, 180),
+        )
+        response.raise_for_status()
+
+        data = response.json()
+
+        if "error" in data:
+            raise RuntimeError(f"ArcGIS error: {data['error']}")
+
+        return data
+
+    # Get total feature count
+    count_data = get_json({
+        "where": "1=1",
+        "returnCountOnly": "true",
+        "f": "json",
+    })
+
+    total = int(count_data["count"])
+
+    if total == 0:
+        raise RuntimeError("ONS centroid layer returned zero records.")
+
+    log(f"ONS centroid records available: {total:,}")
+
+    features = []
+    page_size = 2000
+    offset = 0
+
+    while offset < total:
+        data = get_json({
+            "where": "1=1",
+            "outFields": "*",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "resultOffset": offset,
+            "resultRecordCount": page_size,
+            "orderByFields": "OBJECTID",
+            "f": "geojson",
+        })
+
+        page = data.get("features", [])
+
+        if not page:
+            break
+
+        features.extend(page)
+        offset += len(page)
+
+        log(f"Downloaded centroid records: {len(features):,}/{total:,}")
+
+    if len(features) != total:
+        raise RuntimeError(
+            f"Incomplete centroid download: {len(features):,}/{total:,}"
+        )
+
+    output = {
+        "type": "FeatureCollection",
+        "features": features,
+    }
+
+    temp_target = target.with_name(target.name + ".part")
+
+    try:
+        with temp_target.open("w", encoding="utf-8") as f:
+            json.dump(output, f, ensure_ascii=False)
+
+        temp_target.replace(target)
+
+    finally:
+        if temp_target.exists():
+            temp_target.unlink()
+
+    log(f"Downloaded {target.name}: {target.stat().st_size:,} bytes")
+
 
     # Validate an existing cached GeoJSON before reusing it.
     if target.exists() and target.stat().st_size > 100_000:
@@ -352,8 +454,7 @@ def main() -> None:
     centroids_file = cache / "lsoa_population_weighted_centroids.geojson"
     boundaries_file = cache / "lsoa_boundaries_2021.geojson"
     download(POP_URL, pop_xlsx)
-    download(CENTROIDS_URL, centroids_file)
-    download(BOUNDARIES_URL, boundaries_file)
+download_arcgis_layer(CENTROIDS_URL, CENTROIDS_FILE)    download(BOUNDARIES_URL, boundaries_file)
 
     population = read_population(pop_xlsx)
     centroid_features = read_feature_collection(centroids_file)
