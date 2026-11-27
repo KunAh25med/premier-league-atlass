@@ -25,7 +25,7 @@ from shapely.geometry import shape, mapping
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "data" / "fan-accessibility"
 POP_URL = (
-    "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimates%2Fmid2022revisednov2025tomid2024%2Fsapelsoabroadage20222024.xlsx"
+    "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Fpopulationestimates%2Fdatasets%2Flowersuperoutputareamidyearpopulationestimates%2Fmid2022revisednov2025tomid2024%2Fsapelsoasyoa20222024.xlsx"
 )
 CENTROIDS_URL = (
     "https://opendata.arcgis.com/api/v3/datasets/"
