@@ -49,7 +49,112 @@ def log(message: str) -> None:
     print(message, flush=True)
 
 
+     
 def download(url: str, target: Path) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    # Validate an existing cached GeoJSON before reusing it.
+    if target.exists() and target.stat().st_size > 100_000:
+        if target.suffix == ".geojson":
+            try:
+                with target.open("r", encoding="utf-8") as f:
+                    cached = json.load(f)
+                if cached.get("type") == "FeatureCollection":
+                    log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")
+                    return
+            except (json.JSONDecodeError, OSError):
+                log(f"Cached {target.name} is invalid; downloading again.")
+        else:
+            log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")
+            return
+
+    log(f"Downloading {target.name} ...")
+
+    temp_target = target.with_name(target.name + ".part")
+    retry_delays = [5, 10, 20, 40, 60, 60, 60]
+
+    for attempt in range(len(retry_delays) + 1):
+        total = 0
+
+        try:
+            if temp_target.exists():
+                temp_target.unlink()
+
+            with requests.get(
+                url,
+                stream=True,
+                timeout=(30, 240),
+                headers={
+                    "User-Agent": UA,
+                    "Accept": "application/geo+json, application/json, */*",
+                },
+            ) as response:
+
+                if response.status_code in (429, 500, 502, 503, 504):
+                    raise requests.HTTPError(
+                        f"Temporary server error: HTTP {response.status_code}",
+                        response=response,
+                    )
+
+                response.raise_for_status()
+
+                with temp_target.open("wb") as f:
+                    for block in response.iter_content(1024 * 1024):
+                        if block:
+                            f.write(block)
+                            total += len(block)
+
+            if total < 10_000:
+                raise RuntimeError(
+                    f"{target.name} download too small: {total} bytes"
+                )
+
+            # Validate GeoJSON before replacing the final file.
+            if target.suffix == ".geojson":
+                with temp_target.open("r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                if (
+                    data.get("type") != "FeatureCollection"
+                    or not isinstance(data.get("features"), list)
+                    or not data["features"]
+                ):
+                    raise RuntimeError(
+                        f"{target.name} is not a valid non-empty GeoJSON FeatureCollection."
+                    )
+
+            temp_target.replace(target)
+            log(f"Downloaded {target.name}: {total:,} bytes")
+            return
+
+        except requests.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else None
+
+            if status not in (429, 500, 502, 503, 504):
+                raise
+
+            error = exc
+
+        except (requests.RequestException, RuntimeError, json.JSONDecodeError) as exc:
+            error = exc
+
+        finally:
+            if temp_target.exists():
+                temp_target.unlink()
+
+        if attempt >= len(retry_delays):
+            raise RuntimeError(
+                f"Could not download {target.name} after "
+                f"{attempt + 1} attempts. Last error: {error}"
+            )
+
+        wait = retry_delays[attempt]
+        log(
+            f"Download attempt {attempt + 1} failed: {error}. "
+            f"Retrying in {wait} seconds..."
+        )
+        time.sleep(wait)
+    target.parent.mkdir(parents=True, exist_ok=True)      # Validate an existing cached GeoJSON before reusing it.     if target.exists() and target.stat().st_size > 100_000:         if target.suffix == ".geojson":             try:                 with target.open("r", encoding="utf-8") as f:                     cached = json.load(f)                 if cached.get("type") == "FeatureCollection":                     log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")                     return             except (json.JSONDecodeError, OSError):                 log(f"Cached {target.name} is invalid; downloading again.")         else:             log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")             return      log(f"Downloading {target.name} ...")      temp_target = target.with_name(target.name + ".part")     retry_delays = [5, 10, 20, 40, 60, 60, 60]      for attempt in range(len(retry_delays) + 1):         total = 0          try:             if temp_target.exists():                 temp_target.unlink()              with requests.get(                 url,                 stream=True,                 timeout=(30, 240),                 headers={                     "User-Agent": UA,                     "Accept": "application/geo+json, application/json, */*",                 },             ) as response:                  if response.status_code in (429, 500, 502, 503, 504):                     raise requests.HTTPError(                         f"Temporary server error: HTTP {response.status_code}",                         response=response,                     )                  response.raise_for_status()                  with temp_target.open("wb") as f:                     for block in response.iter_content(1024 * 1024):                         if block:                             f.write(block)                             total += len(block)              if total < 10_000:                 raise RuntimeError(                     f"{target.name} download too small: {total} bytes"                 )              # Validate GeoJSON before replacing the final file.             if target.suffix == ".geojson":                 with temp_target.open("r", encoding="utf-8") as f:                     data = json.load(f)                  if (                     data.get("type") != "FeatureCollection"                     or not isinstance(data.get("features"), list)                     or not data["features"]                 ):                     raise RuntimeError(                         f"{target.name} is not a valid non-empty GeoJSON FeatureCollection."                     )              temp_target.replace(target)             log(f"Downloaded {target.name}: {total:,} bytes")             return          except requests.HTTPError as exc:             status = exc.response.status_code if exc.response is not None else None              if status not in (429, 500, 502, 503, 504):                 raise              error = exc          except (requests.RequestException, RuntimeError, json.JSONDecodeError) as exc:             error = exc          finally:             if temp_target.exists():                 temp_target.unlink()          if attempt >= len(retry_delays):             raise RuntimeError(                 f"Could not download {target.name} after "                 f"{attempt + 1} attempts. Last error: {error}"             )          wait = retry_delays[attempt]         log(             f"Download attempt {attempt + 1} failed: {error}. "             f"Retrying in {wait} seconds..."         )         time.sleep(wait)     target.parent.mkdir(parents=True, exist_ok=True)      # Validate an existing cached GeoJSON before reusing it.     if target.exists() and target.stat().st_size > 100_000:         if target.suffix == ".geojson":             try:                 with target.open("r", encoding="utf-8") as f:                     cached = json.load(f)                 if cached.get("type") == "FeatureCollection":                     log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")                     return             except (json.JSONDecodeError, OSError):                 log(f"Cached {target.name} is invalid; downloading again.")         else:             log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")             return      log(f"Downloading {target.name} ...")      temp_target = target.with_name(target.name + ".part")     retry_delays = [5, 10, 20, 40, 60, 60, 60]      for attempt in range(len(retry_delays) + 1):         total = 0          try:             if temp_target.exists():                 temp_target.unlink()              with requests.get(                 url,                 stream=True,                 timeout=(30, 240),                 headers={                     "User-Agent": UA,                     "Accept": "application/geo+json, application/json, */*",                 },             ) as response:                  if response.status_code in (429, 500, 502, 503, 504):                     raise requests.HTTPError(                         f"Temporary server error: HTTP {response.status_code}",                         response=response,                     )                  response.raise_for_status()                  with temp_target.open("wb") as f:                     for block in response.iter_content(1024 * 1024):                         if block:                             f.write(block)                             total += len(block)              if total < 10_000:                 raise RuntimeError(                     f"{target.name} download too small: {total} bytes"                 )              # Validate GeoJSON before replacing the final file.             if target.suffix == ".geojson":                 with temp_target.open("r", encoding="utf-8") as f:                     data = json.load(f)                  if (                     data.get("type") != "FeatureCollection"                     or not isinstance(data.get("features"), list)                     or not data["features"]                 ):                     raise RuntimeError(                         f"{target.name} is not a valid non-empty GeoJSON FeatureCollection."                     )              temp_target.replace(target)             log(f"Downloaded {target.name}: {total:,} bytes")             return          except requests.HTTPError as exc:             status = exc.response.status_code if exc.response is not None else None              if status not in (429, 500, 502, 503, 504):                 raise              error = exc          except (requests.RequestException, RuntimeError, json.JSONDecodeError) as exc:             error = exc          finally:             if temp_target.exists():                 temp_target.unlink()          if attempt >= len(retry_delays):             raise RuntimeError(                 f"Could not download {target.name} after "                 f"{attempt + 1} attempts. Last error: {error}"             )          wait = retry_delays[attempt]         log(             f"Download attempt {attempt + 1} failed: {error}. "             f"Retrying in {wait} seconds..."         )         time.sleep(wait)     target.parent.mkdir(parents=True, exist_ok=True)      # Validate an existing cached GeoJSON before reusing it.     if target.exists() and target.stat().st_size > 100_000:         if target.suffix == ".geojson":             try:                 with target.open("r", encoding="utf-8") as f:                     cached = json.load(f)                 if cached.get("type") == "FeatureCollection":                     log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")                     return             except (json.JSONDecodeError, OSError):                 log(f"Cached {target.name} is invalid; downloading again.")         else:             log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")             return      log(f"Downloading {target.name} ...")      temp_target = target.with_name(target.name + ".part")     retry_delays = [5, 10, 20, 40, 60, 60, 60]      for attempt in range(len(retry_delays) + 1):         total = 0          try:             if temp_target.exists():                 temp_target.unlink()              with requests.get(                 url,                 stream=True,                 timeout=(30, 240),                 headers={                     "User-Agent": UA,                     "Accept": "application/geo+json, application/json, */*",                 },             ) as response:                  if response.status_code in (429, 500, 502, 503, 504):                     raise requests.HTTPError(                         f"Temporary server error: HTTP {response.status_code}",                         response=response,                     )                  response.raise_for_status()                  with temp_target.open("wb") as f:                     for block in response.iter_content(1024 * 1024):                         if block:                             f.write(block)                             total += len(block)              if total < 10_000:                 raise RuntimeError(                     f"{target.name} download too small: {total} bytes"                 )              # Validate GeoJSON before replacing the final file.             if target.suffix == ".geojson":                 with temp_target.open("r", encoding="utf-8") as f:                     data = json.load(f)                  if (                     data.get("type") != "FeatureCollection"                     or not isinstance(data.get("features"), list)                     or not data["features"]                 ):                     raise RuntimeError(                         f"{target.name} is not a valid non-empty GeoJSON FeatureCollection."                     )              temp_target.replace(target)             log(f"Downloaded {target.name}: {total:,} bytes")             return          except requests.HTTPError as exc:             status = exc.response.status_code if exc.response is not None else None              if status not in (429, 500, 502, 503, 504):                 raise              error = exc          except (requests.RequestException, RuntimeError, json.JSONDecodeError) as exc:             error = exc          finally:             if temp_target.exists():                 temp_target.unlink()          if attempt >= len(retry_delays):             raise RuntimeError(                 f"Could not download {target.name} after "                 f"{attempt + 1} attempts. Last error: {error}"             )          wait = retry_delays[attempt]         log(             f"Download attempt {attempt + 1} failed: {error}. "             f"Retrying in {wait} seconds..."         )         time.sleep(wait)     target.parent.mkdir(parents=True, exist_ok=True)      # Validate an existing cached GeoJSON before reusing it.     if target.exists() and target.stat().st_size > 100_000:         if target.suffix == ".geojson":             try:                 with target.open("r", encoding="utf-8") as f:                     cached = json.load(f)                 if cached.get("type") == "FeatureCollection":                     log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")                     return             except (json.JSONDecodeError, OSError):                 log(f"Cached {target.name} is invalid; downloading again.")         else:             log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")             return      log(f"Downloading {target.name} ...")      temp_target = target.with_name(target.name + ".part")     retry_delays = [5, 10, 20, 40, 60, 60, 60]      for attempt in range(len(retry_delays) + 1):         total = 0          try:             if temp_target.exists():                 temp_target.unlink()              with requests.get(                 url,                 stream=True,                 timeout=(30, 240),                 headers={                     "User-Agent": UA,                     "Accept": "application/geo+json, application/json, */*",                 },             ) as response:                  if response.status_code in (429, 500, 502, 503, 504):                     raise requests.HTTPError(                         f"Temporary server error: HTTP {response.status_code}",                         response=response,                     )                  response.raise_for_status()                  with temp_target.open("wb") as f:                     for block in response.iter_content(1024 * 1024):                         if block:                             f.write(block)                             total += len(block)              if total < 10_000:                 raise RuntimeError(                     f"{target.name} download too small: {total} bytes"                 )              # Validate GeoJSON before replacing the final file.             if target.suffix == ".geojson":                 with temp_target.open("r", encoding="utf-8") as f:                     data = json.load(f)                  if (                     data.get("type") != "FeatureCollection"                     or not isinstance(data.get("features"), list)                     or not data["features"]                 ):                     raise RuntimeError(                         f"{target.name} is not a valid non-empty GeoJSON FeatureCollection."                     )              temp_target.replace(target)             log(f"Downloaded {target.name}: {total:,} bytes")             return          except requests.HTTPError as exc:             status = exc.response.status_code if exc.response is not None else None              if status not in (429, 500, 502, 503, 504):                 raise              error = exc          except (requests.RequestException, RuntimeError, json.JSONDecodeError) as exc:             error = exc          finally:             if temp_target.exists():                 temp_target.unlink()          if attempt >= len(retry_delays):             raise RuntimeError(                 f"Could not download {target.name} after "                 f"{attempt + 1} attempts. Last error: {error}"             )          wait = retry_delays[attempt]         log(             f"Download attempt {attempt + 1} failed: {error}. "             f"Retrying in {wait} seconds..."         )         time.sleep(wait)     target.parent.mkdir(parents=True, exist_ok=True)      # Validate an existing cached GeoJSON before reusing it.     if target.exists() and target.stat().st_size > 100_000:         if target.suffix == ".geojson":             try:                 with target.open("r", encoding="utf-8") as f:                     cached = json.load(f)                 if cached.get("type") == "FeatureCollection":                     log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")                     return             except (json.JSONDecodeError, OSError):                 log(f"Cached {target.name} is invalid; downloading again.")         else:             log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")             return      log(f"Downloading {target.name} ...")      temp_target = target.with_name(target.name + ".part")     retry_delays = [5, 10, 20, 40, 60, 60, 60]      for attempt in range(len(retry_delays) + 1):         total = 0          try:             if temp_target.exists():                 temp_target.unlink()              with requests.get(                 url,                 stream=True,                 timeout=(30, 240),                 headers={                     "User-Agent": UA,                     "Accept": "application/geo+json, application/json, */*",                 },             ) as response:                  if response.status_code in (429, 500, 502, 503, 504):                     raise requests.HTTPError(                         f"Temporary server error: HTTP {response.status_code}",                         response=response,                     )                  response.raise_for_status()                  with temp_target.open("wb") as f:                     for block in response.iter_content(1024 * 1024):                         if block:                             f.write(block)                             total += len(block)              if total < 10_000:                 raise RuntimeError(                     f"{target.name} download too small: {total} bytes"                 )              # Validate GeoJSON before replacing the final file.             if target.suffix == ".geojson":                 with temp_target.open("r", encoding="utf-8") as f:                     data = json.load(f)                  if (                     data.get("type") != "FeatureCollection"                     or not isinstance(data.get("features"), list)                     or not data["features"]                 ):                     raise RuntimeError(                         f"{target.name} is not a valid non-empty GeoJSON FeatureCollection."                     )              temp_target.replace(target)             log(f"Downloaded {target.name}: {total:,} bytes")             return          except requests.HTTPError as exc:             status = exc.response.status_code if exc.response is not None else None              if status not in (429, 500, 502, 503, 504):                 raise              error = exc          except (requests.RequestException, RuntimeError, json.JSONDecodeError) as exc:             error = exc          finally:             if temp_target.exists():                 temp_target.unlink()          if attempt >= len(retry_delays):             raise RuntimeError(                 f"Could not download {target.name} after "                 f"{attempt + 1} attempts. Last error: {error}"             )          wait = retry_delays[attempt]         log(             f"Download attempt {attempt + 1} failed: {error}. "             f"Retrying in {wait} seconds..."         )         time.sleep(wait)
     target.parent.mkdir(parents=True, exist_ok=True)
     if target.exists() and target.stat().st_size > 100_000:
         log(f"Using cached {target.name} ({target.stat().st_size:,} bytes)")
